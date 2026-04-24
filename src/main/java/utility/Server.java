@@ -1,6 +1,6 @@
-package utility;
+package main.java.utility;
 
-import protocol.Envelope;
+import main.java.protocol.Envelope;
 
 import java.io.IOException;
 import java.net.ServerSocket;

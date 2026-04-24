@@ -1,4 +1,4 @@
-package protocol;
+package main.java.protocol;
 
 /**
  * Envelope is a small wrapper that pairs an incoming message with the

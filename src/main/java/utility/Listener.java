@@ -1,9 +1,9 @@
-package utility;
+package main.java.utility;
 
 
-import protocol.Envelope;
-import protocol.Msg;
-import protocol.ReplyChannel;
+import main.java.protocol.Envelope;
+import main.java.protocol.Msg;
+import main.java.protocol.ReplyChannel;
 
 import java.io.EOFException;
 import java.io.IOException;
