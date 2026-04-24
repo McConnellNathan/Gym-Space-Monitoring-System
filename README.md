@@ -30,6 +30,13 @@ I have the code set up to read the API key from an environment variable called
 Linux or Mac, but it's a pretty common thing so there should be good documentation
 on Google.
 
+***NOTE:*** The API key is not free, I thought it had a free amount but misread
+it when looking at Google Cloud Console. However, it is pretty cheap after all the
+testing and messing around I have spent a whole 50 cents. I just wanted to make sure
+nobody is spending money they don't to. College is expensive enough. If anyone doesn't
+want to deal with the API key but has some code they want tested with it, just 
+let me know and I can run it for you. Just message me, and I'll get to it as soon as I can.
+
 ## Running the Code
 In the `app` package, there are 3 different Java files that run the AI components
 independently if you want to test them. This will require you to have the API key set up
