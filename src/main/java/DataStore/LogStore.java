@@ -16,6 +16,12 @@ import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+/**
+ * In-memory data server for logs, member entry history, and machine usage data.
+ *
+ * <p>It accepts protocol messages from other subsystems and replies with serializable
+ * protocol responses. Demo statistics are seeded during construction.</p>
+ */
 public class LogStore extends Server {
 
     private static final int UNKNOWN_MESSAGE_ERROR_CODE = -200;
@@ -37,18 +43,27 @@ public class LogStore extends Server {
     private final List<Msg.MemberEnterRecord> memberEnterRecords = new CopyOnWriteArrayList<>();
     private final ArrayList<MachineData> machineData = new ArrayList<>();
 
+    /**
+     * Creates a Log Store listening on all local interfaces for the given port.
+     */
     public LogStore(int port) {
         super(port);
         initializeMachineData();
         initializeMemberEnterData();
     }
 
+    /**
+     * Creates a Log Store bound to a specific host and port.
+     */
     public LogStore(String host, int port) {
         super(host, port);
         initializeMachineData();
         initializeMemberEnterData();
     }
 
+    /**
+     * Handles log writes, log reads, dashboard data requests, and door scanner entry events.
+     */
     @Override
     public void processMessage(Envelope env) {
         Msg msg = env.msg();
@@ -104,6 +119,11 @@ public class LogStore extends Server {
                         true,
                         "Machine data retrieved successfully"
                 ));
+                case Msg.RequestMemberData ignored -> env.replyTo().send(new Msg.MemberDataResponseMsg(
+                        memberEnterRecords.toArray(Msg.MemberEnterRecord[]::new),
+                        true,
+                        "Member data retrieved successfully"
+                ));
                 case Msg.Ping ignored -> env.replyTo().send(new Msg.Pong());
                 default -> env.replyTo().send(new Msg.ErrorMsg(
                         UNKNOWN_MESSAGE_ERROR_CODE,
@@ -117,6 +137,9 @@ public class LogStore extends Server {
         }
     }
 
+    /**
+     * Seeds demo machine usage totals for dashboard statistics.
+     */
     private void initializeMachineData() {
         if (!machineData.isEmpty()) {
             return;
@@ -132,6 +155,12 @@ public class LogStore extends Server {
         }
     }
 
+    /**
+     * Seeds member-entry timestamps for demo traffic graphs.
+     *
+     * <p>The generated data favors weekdays and clusters around 5-6 PM to resemble
+     * realistic after-work gym traffic.</p>
+     */
     private void initializeMemberEnterData() {
         if (!memberEnterRecords.isEmpty()) {
             return;
@@ -157,6 +186,9 @@ public class LogStore extends Server {
         }
     }
 
+    /**
+     * Chooses a daily entry volume with busier weekdays than weekends.
+     */
     private int sampleEntriesForDay(DayOfWeek dayOfWeek, ThreadLocalRandom random) {
         return switch (dayOfWeek) {
             case MONDAY, TUESDAY, WEDNESDAY, THURSDAY -> random.nextInt(26, 41);
@@ -166,6 +198,9 @@ public class LogStore extends Server {
         };
     }
 
+    /**
+     * Samples a member arrival time from a normal distribution centered near 5:30 PM.
+     */
     private LocalTime sampleGymEntryTime(ThreadLocalRandom random) {
         double meanHour = 17.5;
         double standardDeviation = 2.2;
@@ -182,6 +217,9 @@ public class LogStore extends Server {
         return LocalTime.of(Math.min(hour, 23), minute, random.nextInt(0, 60));
     }
 
+    /**
+     * Provides a safe placeholder when a door scanner writes an empty member record.
+     */
     private Msg.MemberEnterRecord normalizeMemberEnterRecord(Msg.MemberEnterRecord record) {
         if (record == null) {
             return new Msg.MemberEnterRecord(
@@ -196,6 +234,9 @@ public class LogStore extends Server {
         return record;
     }
 
+    /**
+     * Ensures log records always have a log id before storing them.
+     */
     private Msg.LogRecord normalizeRecord(Msg.LogRecord record) {
         if (record == null) {
             return new Msg.LogRecord(

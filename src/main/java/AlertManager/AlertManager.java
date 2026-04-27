@@ -12,6 +12,12 @@ import java.util.Iterator;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Server responsible for turning hazard detections into active alerts.
+ *
+ * <p>The Alert Manager keeps the current alert set in memory, writes alert lifecycle events
+ * to the Log Store, and pushes full alert snapshots to each connected dashboard.</p>
+ */
 public class AlertManager extends Server {
 
     private static final int UNKNOWN_MESSAGE_ERROR_CODE = -100;
@@ -22,28 +28,55 @@ public class AlertManager extends Server {
     private RemoteMessageClient logStoreClient;
 
     /**
-     * Create the inital set up of the server for the Processor waiting to be started
+     * Creates an Alert Manager listening on all local interfaces for the given port.
      *
-     * @param port give server listening port
+     * @param port server socket port for incoming protocol messages
      */
     public AlertManager(int port) {
         super(port);
     }
 
+    /**
+     * Creates an Alert Manager bound to a specific host and port.
+     *
+     * @param host interface hostname or address to bind
+     * @param port server socket port for incoming protocol messages
+     */
     public AlertManager(String host, int port) {
         super(host, port);
     }
 
+    /**
+     * Creates an Alert Manager and immediately connects it to the Log Store.
+     *
+     * @param port server socket port for incoming protocol messages
+     * @param logStoreHost host where the Log Store is listening
+     * @param logStorePort port where the Log Store is listening
+     */
     public AlertManager(int port, String logStoreHost, int logStorePort) {
         this(port);
         connectToLogStore(logStoreHost, logStorePort);
     }
 
+    /**
+     * Creates a host-bound Alert Manager and immediately connects it to the Log Store.
+     *
+     * @param host interface hostname or address to bind
+     * @param port server socket port for incoming protocol messages
+     * @param logStoreHost host where the Log Store is listening
+     * @param logStorePort port where the Log Store is listening
+     */
     public AlertManager(String host, int port, String logStoreHost, int logStorePort) {
         this(host, port);
         connectToLogStore(logStoreHost, logStorePort);
     }
 
+    /**
+     * Routes incoming protocol messages to alert, dashboard, and status handlers.
+     *
+     * <p>Dashboard connections are remembered as reply channels so alert snapshots can
+     * be broadcast without each dashboard polling for updates.</p>
+     */
     @Override
     public void processMessage(Envelope env) {
         Msg msg = env.msg();
@@ -108,7 +141,7 @@ public class AlertManager extends Server {
         writeToLogs(alert, "CREATED");
 
         System.out.printf(
-                "[AlertManager] Hazard detection received id=%s type=%s -> alertId=%s severity=%s%n",
+                "[AlertManager] Hazard detection received type=%s -> alertId=%s severity=%s%n",
                 hazardDetectionMsg.type(),
                 alert.alertId(),
                 alert.severity()
@@ -251,6 +284,12 @@ public class AlertManager extends Server {
         }
     }
 
+    /**
+     * Broadcasts the complete current alert snapshot to every connected dashboard.
+     *
+     * <p>Dashboards that fail during send are removed, because their socket is no longer
+     * usable for future notifications.</p>
+     */
     private void NotifyDashboards() {
         ArrayList<Alert> activeAlertsSnapshot = new ArrayList<>(activeAlerts.values());
         Msg.AlertNotification[] notifications = activeAlertsSnapshot.stream()
@@ -277,6 +316,12 @@ public class AlertManager extends Server {
         }
     }
 
+    /**
+     * Opens or replaces the persistent client connection used for Log Store writes.
+     *
+     * @param host host where the Log Store is listening
+     * @param port port where the Log Store is listening
+     */
     public synchronized void connectToLogStore(String host, int port) {
         try {
             if (logStoreClient != null) {
@@ -289,6 +334,9 @@ public class AlertManager extends Server {
         }
     }
 
+    /**
+     * Sends a one-way message to the Log Store over the existing client connection.
+     */
     public synchronized void sendToLogStoreNoReply(Msg msg) throws IOException {
         if (logStoreClient == null) {
             throw new IOException("LogStore client is not connected");
@@ -296,6 +344,9 @@ public class AlertManager extends Server {
         logStoreClient.send(msg);
     }
 
+    /**
+     * Reads the next response from the Log Store connection.
+     */
     public synchronized Msg readFromLogStore() throws IOException, ClassNotFoundException {
         if (logStoreClient == null) {
             throw new IOException("LogStore client is not connected");
@@ -303,6 +354,9 @@ public class AlertManager extends Server {
         return logStoreClient.read();
     }
 
+    /**
+     * Sends a request to the Log Store and waits for the corresponding response.
+     */
     public synchronized Msg sendToLogStore(Msg msg) throws IOException, ClassNotFoundException {
         if (logStoreClient == null) {
             throw new IOException("LogStore client is not connected");
