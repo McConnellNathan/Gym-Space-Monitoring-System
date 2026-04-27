@@ -33,41 +33,52 @@ import javafx.util.Duration;
 import nu.pattern.OpenCV;
 import java.io.ByteArrayInputStream;
 import java.util.Arrays;
+import protocol.Msg;
+import utility.RemoteMessageClient;
+import java.io.IOException;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import aihazardanalyzer.service.HazardMessageFactory;
 
 public class DemoAiDashboard extends Application {
+    // AI and hardware service variables
     private WebcamFrameCapture webcam;
-
     private OccupancyAnalysisService occupancyAnalysisService;
     private AggressionAnalysisService aggressionAnalysisService;
     private FallAnalysisService fallAnalysisService;
     private WalkwayAnalysisService walkwayAnalysisService;
-
     private OccupancyResultStabilizer occupancyStabilizer;
     private AggressionResultStabilizer aggressionStabilizer;
     private FallResultStabilizer fallStabilizer;
     private WalkwayResultStabilizer walkwayStabilizer;
-
     private BulkyBuzzerService bulkyBuzzerService;
     private AlarmSoundPlayer alarmSoundPlayer;
-
-    private ImageView cameraView;
-
     private volatile OccupancyAnalysisResult latestOccupancyResult;
     private volatile AggressionAnalysisResult latestAggressionResult;
     private volatile FallAnalysisResult latestFallResult;
     private volatile WalkwayAnalysisResult latestWalkwayResult;
     private volatile AudioAnalysisResult latestAudioResult;
-
+    private ImageView cameraView;
     private volatile byte[] latestFrameBytes;
-
     private volatile boolean frameCaptureRunning = false;
     private volatile boolean occupancyRunning = false;
     private volatile boolean aggressionRunning = false;
     private volatile boolean fallRunning = false;
     private volatile boolean walkwayRunning = false;
-
     private boolean lastAlarmState = false;
 
+    // Messaging variables
+    private static final String ALERT_MANAGER_HOST = "localhost";
+    private static final int ALERT_MANAGER_PORT = 5000;
+    private static final int DEMO_ZONE_ID = 1;
+    private static final String CAMERA_LOCATION = "Demo Camera Zone";
+    private static final String SOUND_LOCATION = "Demo Sound Zone";
+    private static final long ALERT_COOLDOWN_MS = 10000;
+    private RemoteMessageClient alertManagerClient;
+    private final Map<String, Long> lastSentAlertTimes = new ConcurrentHashMap<>();
+
+    // UI components
     private Label peopleCountLabel;
     private Label sceneStatusLabel;
     private Label occupancyConfidenceLabel;
@@ -151,6 +162,14 @@ public class DemoAiDashboard extends Application {
         buzzerLabel = new Label("Bulky Buzzer: OFF");
         buzzerReasonLabel = new Label("Buzzer Reason: --");
         audioLevelLabel = new Label("Audio Level: --");
+
+        try {
+            alertManagerClient = new RemoteMessageClient(ALERT_MANAGER_HOST, ALERT_MANAGER_PORT);
+            System.out.printf("[DemoAiDashboard] Connected to AlertManager at %s:%d%n",
+                    ALERT_MANAGER_HOST, ALERT_MANAGER_PORT);
+        } catch (IOException e) {
+            System.err.println("[DemoAiDashboard] Could not connect to AlertManager: " + e.getMessage());
+        }
 
         VBox root = new VBox(
                 12,
@@ -294,6 +313,19 @@ public class DemoAiDashboard extends Application {
                 OccupancyAnalysisResult stableResult = occupancyStabilizer.addAndStabilize(rawResult);
                 latestOccupancyResult = stableResult;
 
+                if ("CROWDING".equalsIgnoreCase(stableResult.getSceneStatus())
+                        && shouldSendAlert("OVERCROWDING_ZONE_" + DEMO_ZONE_ID, 15000)) {
+                    sendHazardDetectionAsync(
+                            "OVERCROWDING_ZONE_" + DEMO_ZONE_ID,
+                            HazardMessageFactory.buildOvercrowdingMessage(
+                                    DEMO_ZONE_ID,
+                                    CAMERA_LOCATION,
+                                    stableResult.getConfidence(),
+                                    stableResult.getPeopleCount()
+                            )
+                    );
+                }
+
                 Platform.runLater(() -> {
                     peopleCountLabel.setText("People Count: " + stableResult.getPeopleCount());
                     peopleCountLabel.setStyle("-fx-text-fill: green; -fx-font-weight: bold; -fx-font-size: 14px;");
@@ -325,6 +357,18 @@ public class DemoAiDashboard extends Application {
                 AggressionAnalysisResult rawResult = aggressionAnalysisService.analyze(frameCopy, "image/jpeg");
                 AggressionAnalysisResult stableResult = aggressionStabilizer.addAndStabilize(rawResult);
                 latestAggressionResult = stableResult;
+
+                if (stableResult.isPossibleConflict()
+                        && shouldSendAlert("AGGRESSION_ZONE_" + DEMO_ZONE_ID, ALERT_COOLDOWN_MS)) {
+                    sendHazardDetectionAsync(
+                            "AGGRESSION_ZONE_" + DEMO_ZONE_ID,
+                            HazardMessageFactory.buildAggressionDetectionMessage(
+                                    DEMO_ZONE_ID,
+                                    CAMERA_LOCATION,
+                                    stableResult.getConfidence()
+                            )
+                    );
+                }
 
                 Platform.runLater(() -> {
                     aggressionLabel.setText("Possible Conflict: " + stableResult.isPossibleConflict());
@@ -362,6 +406,18 @@ public class DemoAiDashboard extends Application {
                 FallAnalysisResult stableResult = fallStabilizer.addAndStabilize(rawResult);
                 latestFallResult = stableResult;
 
+                if (stableResult.isPossibleFall()
+                        && shouldSendAlert("FALL_ZONE_" + DEMO_ZONE_ID, ALERT_COOLDOWN_MS)) {
+                    sendHazardDetectionAsync(
+                            "FALL_ZONE_" + DEMO_ZONE_ID,
+                            HazardMessageFactory.buildFallDetectionMessage(
+                                    DEMO_ZONE_ID,
+                                    CAMERA_LOCATION,
+                                    stableResult.getConfidence()
+                            )
+                    );
+                }
+
                 Platform.runLater(() -> {
                     fallLabel.setText("Possible Fall: " + stableResult.isPossibleFall());
                     fallConfidenceLabel.setText(String.format("Fall Confidence: %.2f", stableResult.getConfidence()));
@@ -397,6 +453,18 @@ public class DemoAiDashboard extends Application {
                 WalkwayAnalysisResult rawResult = walkwayAnalysisService.analyze(frameCopy, "image/jpeg");
                 WalkwayAnalysisResult stableResult = walkwayStabilizer.addAndStabilize(rawResult);
                 latestWalkwayResult = stableResult;
+
+                if (stableResult.isWalkwayObstructed()
+                        && shouldSendAlert("WALKWAY_ZONE_" + DEMO_ZONE_ID, ALERT_COOLDOWN_MS)) {
+                    sendHazardDetectionAsync(
+                            "WALKWAY_ZONE_" + DEMO_ZONE_ID,
+                            HazardMessageFactory.buildWalkwayObstructionMessage(
+                                    DEMO_ZONE_ID,
+                                    CAMERA_LOCATION,
+                                    stableResult.getConfidence()
+                            )
+                    );
+                }
 
                 Platform.runLater(() -> {
                     walkwayLabel.setText("Walkway Obstructed: " + stableResult.isWalkwayObstructed());
@@ -446,6 +514,16 @@ public class DemoAiDashboard extends Application {
                         "Alarm activated manually."
                 );
                 System.out.println("Audio AI skipped: manual trigger.");
+            } else if (buzzerState.getTriggerSource() == BuzzerTriggerSource.AUDIO_THRESHOLD
+                    && shouldSendAlert("SOUND_ZONE_" + DEMO_ZONE_ID, ALERT_COOLDOWN_MS)) {
+                sendHazardDetectionAsync(
+                        "SOUND_ZONE_" + DEMO_ZONE_ID,
+                        HazardMessageFactory.buildSoundDisturbanceMessage(
+                                DEMO_ZONE_ID,
+                                SOUND_LOCATION,
+                                1.0
+                        )
+                );
             }
         }
 
@@ -482,6 +560,43 @@ public class DemoAiDashboard extends Application {
         if (alarmSoundPlayer != null) {
             alarmSoundPlayer.close();
         }
+        if (alertManagerClient != null) {
+            try {
+                alertManagerClient.close();
+            } catch (IOException ignored) {
+            }
+        }
+    }
+
+    private boolean shouldSendAlert(String key, long cooldownMs) {
+        long now = System.currentTimeMillis();
+        Long lastSent = lastSentAlertTimes.get(key);
+
+        if (lastSent != null && now - lastSent < cooldownMs) {
+            return false;
+        }
+
+        lastSentAlertTimes.put(key, now);
+        return true;
+    }
+
+    private void sendHazardDetectionAsync(String cooldownKey, Msg.HazardDetectionMsg msg) {
+        if (alertManagerClient == null) {
+            System.err.println("[DemoAiDashboard] AlertManager client is not connected.");
+            lastSentAlertTimes.remove(cooldownKey);
+            return;
+        }
+
+        Thread.ofVirtual().name("hazard-send-" + msg.type()).start(() -> {
+            try {
+                Msg response = alertManagerClient.sendAndRead(msg);
+                System.out.println("[DemoAiDashboard] Sent alert: " + msg);
+                System.out.println("[DemoAiDashboard] AlertManager response: " + response);
+            } catch (IOException | ClassNotFoundException e) {
+                lastSentAlertTimes.remove(cooldownKey);
+                System.err.println("[DemoAiDashboard] Failed to send alert to AlertManager: " + e.getMessage());
+            }
+        });
     }
 
     public static void main(String[] args) {

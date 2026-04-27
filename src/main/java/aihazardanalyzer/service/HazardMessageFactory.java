@@ -1,6 +1,6 @@
-package main.java.aihazardanalyzer;
+package aihazardanalyzer.service;
 
-import main.java.protocol.Msg;
+import protocol.Msg;
 
 import java.util.UUID;
 
@@ -78,6 +78,20 @@ public final class HazardMessageFactory {
                 location,
                 confidence,
                 "Possible improper equipment use detected in zone " + zoneId
+        );
+    }
+
+    public static Msg.HazardDetectionMsg buildSoundDisturbanceMessage(
+            int zoneId,
+            String location,
+            double confidence
+    ) {
+        return buildMessage(
+                Msg.AlertType.SOUND_DISTURBANCE,
+                zoneId,
+                location,
+                confidence,
+                "Possible sound disturbance detected in zone " + zoneId
         );
     }
 

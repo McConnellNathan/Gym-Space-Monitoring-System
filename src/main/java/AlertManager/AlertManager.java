@@ -1,9 +1,9 @@
-package main.java.AlertManager;
+package AlertManager;
 
-import main.java.protocol.Envelope;
-import main.java.protocol.Msg;
-import main.java.utility.RemoteMessageClient;
-import main.java.utility.Server;
+import protocol.Envelope;
+import protocol.Msg;
+import utility.RemoteMessageClient;
+import utility.Server;
 
 import java.io.IOException;
 import java.util.UUID;

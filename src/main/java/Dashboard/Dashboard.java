@@ -1,7 +1,7 @@
-package main.java.Dashboard;
+package Dashboard;
 
-import main.java.protocol.Msg;
-import main.java.utility.RemoteMessageClient;
+import protocol.Msg;
+import utility.RemoteMessageClient;
 
 import java.io.IOException;
 import java.util.Map;
