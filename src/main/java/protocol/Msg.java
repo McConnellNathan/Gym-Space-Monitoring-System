@@ -1,6 +1,6 @@
 package protocol;
 
-import main.java.DataStore.MachineData;
+import DataStore.MachineData;
 
 import java.io.Serializable;
 

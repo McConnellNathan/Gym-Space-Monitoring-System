@@ -99,11 +99,11 @@ public class LogStore extends Server {
                             "Member entry recorded successfully"
                     ));
                 }
-                case Msg.RequestMachineData ignored -> env.replyTo().send(new Msg.MachineDataResponseMsg(
-                        machineData.toArray(MachineData[]::new),
-                        true,
-                        "Machine data retrieved successfully"
-                ));
+//                case Msg.RequestMachineData ignored -> env.replyTo().send(new Msg.MachineDataResponseMsg(
+//                        machineData.toArray(MachineData[]::new),
+//                        true,
+//                        "Machine data retrieved successfully"
+//                ));
                 case Msg.Ping ignored -> env.replyTo().send(new Msg.Pong());
                 default -> env.replyTo().send(new Msg.ErrorMsg(
                         UNKNOWN_MESSAGE_ERROR_CODE,

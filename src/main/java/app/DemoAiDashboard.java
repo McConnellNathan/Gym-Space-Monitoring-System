@@ -214,7 +214,13 @@ public class DemoAiDashboard extends Application {
         startWalkwayLoop();
         startBuzzerUiLoop();
 
-        stage.setOnCloseRequest(event -> stopAllTimelines());
+        stage.setOnCloseRequest(event -> {
+            try {
+                stop();
+            } catch (Exception e) {
+                System.err.println("[DemoAiDashboard] Error during shutdown: " + e.getMessage());
+            }
+        });
     }
 
     private void startFrameCaptureLoop() {
