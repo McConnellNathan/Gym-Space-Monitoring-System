@@ -124,7 +124,10 @@ public class LogStore extends Server {
                         true,
                         "Member data retrieved successfully"
                 ));
-                case Msg.Ping ignored -> env.replyTo().send(new Msg.Pong());
+                case Msg.Ping ignored -> {
+                    System.out.println("[LogStore] Received Ping. Sending Pong.");
+                    env.replyTo().send(new Msg.Pong());
+                }
                 default -> env.replyTo().send(new Msg.ErrorMsg(
                         UNKNOWN_MESSAGE_ERROR_CODE,
                         -1,

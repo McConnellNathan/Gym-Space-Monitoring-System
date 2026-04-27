@@ -314,9 +314,25 @@ public class AlertManager extends Server {
             }
             logStoreClient = new RemoteMessageClient(host, port);
             System.out.printf("[AlertManager] Connected to LogStore at %s:%d%n", host, port);
-        } catch (IOException e) {
+            verifyLogStoreConnection();
+        } catch (IOException | ClassNotFoundException e) {
             throw new RuntimeException("Unable to connect AlertManager to LogStore", e);
         }
+    }
+
+    /**
+     * Sends a short Ping/Pong health check over the Log Store connection.
+     */
+    private void verifyLogStoreConnection() throws IOException, ClassNotFoundException {
+        System.out.println("[AlertManager] Sending Ping to LogStore...");
+        Msg response = sendToLogStore(new Msg.Ping());
+
+        if (response instanceof Msg.Pong) {
+            System.out.println("[AlertManager] Received Pong from LogStore. Connection verified.");
+            return;
+        }
+
+        throw new IOException("Expected Pong from LogStore, received " + response.getClass().getSimpleName());
     }
 
     /**
