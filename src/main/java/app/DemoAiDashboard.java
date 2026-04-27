@@ -159,9 +159,9 @@ public class DemoAiDashboard extends Application {
 
         try {
             messageHandler = MessageHandler.getInstance();
-            System.out.println("[DemoAiDashboard] Connected to AlertManager through MessageHandler.");
+            System.out.println("Connected to AlertManager through MessageHandler.");
         } catch (IOException e) {
-            System.err.println("[DemoAiDashboard] Could not connect to AlertManager: " + e.getMessage());
+            System.err.println("Could not connect to AlertManager: " + e.getMessage());
         }
 
         VBox root = new VBox(
@@ -203,7 +203,7 @@ public class DemoAiDashboard extends Application {
             }
         });
 
-        stage.setTitle("Gym Vision Demo Dashboard");
+        stage.setTitle("GSMS AI Demo Dashboard");
         stage.setScene(scene);
         stage.show();
 
@@ -218,7 +218,7 @@ public class DemoAiDashboard extends Application {
             try {
                 stop();
             } catch (Exception e) {
-                System.err.println("[DemoAiDashboard] Error during shutdown: " + e.getMessage());
+                System.err.println("Error during shutdown: " + e.getMessage());
             }
         });
     }

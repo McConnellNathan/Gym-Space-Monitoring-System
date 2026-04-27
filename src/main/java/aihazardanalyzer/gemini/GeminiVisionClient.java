@@ -116,13 +116,9 @@ public class GeminiVisionClient {
                 .responseMimeType("application/json")
                 .build();
 
-        long startMs = System.currentTimeMillis();
 
         GenerateContentResponse response =
                 client.models.generateContent(DEFAULT_MODEL, content, config);
-
-        long endMs = System.currentTimeMillis();
-        System.out.println("Gemini vision call took " + (endMs - startMs) + " ms");
 
         return response.text();
     }
