@@ -4,6 +4,7 @@ import main.java.protocol.Msg;
 import main.java.utility.RemoteMessageClient;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -12,7 +13,7 @@ public class Dashboard implements AutoCloseable {
 
     private final RemoteMessageClient alertManagerClient;
     private final RemoteMessageClient logStoreClient;
-    private final Map<String, Msg.AlertNotificationMsg> activeAlerts = new ConcurrentHashMap<>();
+    private final Map<String, Msg.AlertNotification> activeAlerts = new ConcurrentHashMap<>();
     private final AtomicBoolean listeningForAlerts = new AtomicBoolean(false);
 
     private Thread alertListenerThread;
@@ -23,7 +24,11 @@ public class Dashboard implements AutoCloseable {
             String logStoreHost,
             int logStorePort
     ) throws IOException {
-        this.alertManagerClient = new RemoteMessageClient(alertManagerHost, alertManagerPort);
+        this.alertManagerClient = new RemoteMessageClient(
+                alertManagerHost,
+                alertManagerPort,
+                new Msg.DashboardConnected()
+        );
         this.logStoreClient = new RemoteMessageClient(logStoreHost, logStorePort);
         startAlertListener();
     }
@@ -53,7 +58,7 @@ public class Dashboard implements AutoCloseable {
         return logStoreClient.sendAndRead(msg);
     }
 
-    public Map<String, Msg.AlertNotificationMsg> getActiveAlerts() {
+    public Map<String, Msg.AlertNotification> getActiveAlerts() {
         return Map.copyOf(activeAlerts);
     }
 
@@ -90,16 +95,16 @@ public class Dashboard implements AutoCloseable {
 
     private void handleAlertManagerMessage(Msg incoming) {
         if (incoming instanceof Msg.AlertNotificationMsg notification) {
-            if (notification.status() == Msg.AlertStatus.RESOLVED) {
-                activeAlerts.remove(notification.alertId());
-            } else {
-                activeAlerts.put(notification.alertId(), notification);
+            Map<String, Msg.AlertNotification> latestAlerts = new HashMap<>();
+            for (Msg.AlertNotification alert : notification.alerts()) {
+                latestAlerts.put(alert.alertId(), alert);
             }
+
+            activeAlerts.clear();
+            activeAlerts.putAll(latestAlerts);
             System.out.printf(
-                    "[Dashboard] Alert update received alertId=%s status=%s type=%s%n",
-                    notification.alertId(),
-                    notification.status(),
-                    notification.type()
+                    "[Dashboard] Alert snapshot received count=%d%n",
+                    notification.alerts().length
             );
             return;
         }
@@ -119,6 +124,10 @@ public class Dashboard implements AutoCloseable {
     @Override
     public void close() {
         stopAlertListener();
+        try {
+            alertManagerClient.send(new Msg.DisconnectMsg("Dashboard disconnecting"));
+        } catch (IOException ignored) {
+        }
         try {
             alertManagerClient.close();
         } catch (IOException ignored) {
