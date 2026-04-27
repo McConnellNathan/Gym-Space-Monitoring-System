@@ -1,5 +1,7 @@
 package main.java.protocol;
 
+import main.java.DataStore.MachineData;
+
 import java.io.Serializable;
 
 /**
@@ -43,49 +45,150 @@ import java.io.Serializable;
 
 public interface Msg extends Serializable {
 
-    public final int FREE_INT = 0;
 
-    public final int OCCUPIED_INT = 1;
+    enum AlertSeverity {
+        INFORMATIONAL,
+        WARNING,
+        CRITICAL
+    }
 
-    public final boolean FREE_BOOL = false;
+    enum AlertType {
+        FALL,
+        INJURY,
+        AGGRESSION,
+        OVERCROWDING,
+        WALKWAY_OBSTRUCTION,
+        IMPROPER_EQUIPMENT_USE,
+        MACHINE_MALFUNCTION,
+        ENVIRONMENTAL_HAZARD,
+        SOUND_DISTURBANCE,
+        SYSTEM_ERROR
+    }
 
-    public final boolean OCCUPIED_BOOL = true;
-
-    public final int LIGHT_ERROR_CODE = -2;
-
-    public final int SENSOR_ERROR_CODE = -1;
+    enum AlertStatus {
+        ACTIVE,
+        RESOLVED
+    }
 
     record Ping() implements Msg {}
 
     record Pong() implements Msg {}
 
-    /*
-     *  Need Alert message with alert type (crictial, warning, informational), alert descriptions 
-    * Messege for SoundMonitor, Ocupancy, Injury, Fall detection, Agression, tripHazard
-    * 
-    * GUI alert manager send update message to gui
-    * 
-    * Log store read/write request 
-     */
+    record DashboardConnected() implements Msg {}
 
-    record FloorInformation(int id, int maxCapacity, int available, int[] floorData) implements Serializable {}
-
-    record InitialFloorPing(FloorInformation info) implements Msg {}
-
-    record FloorUpdateMsg(int change, int id, FloorInformation info) implements Msg {}
-
-    record ParkingSpotUpdateMsg(int id, boolean isOccupied) implements Msg {}
-
-    record ErrorMsg(int code, int spotID,String message) implements Msg {}
-
-//    if the sensor driver has an error it sends the parking spot this message
-    record SensorErrorMsg() implements Msg {}
-
-    record SensorUpdateMsg(boolean isOccupied) implements Msg {}
-
-    record ToggleLightMsg(boolean enabled) implements Msg {}
+    // Generic error response used when a request cannot be processed.
+    record ErrorMsg(int code, int spotID, String message) implements Msg {}
 
 //    this disconnected message is for disconnecting sockets/streamn
 //    NOT for light or sensor errors
     record DisconnectMsg(String disconnectMsg) implements Msg {}
+
+    // Sent from the AI Hazard Analyzer to report a newly detected hazard.
+    record HazardDetectionMsg(
+            AlertType type,
+            String location,
+            double confidence,
+            String description,
+            long timestampEpochMillis
+    ) implements Msg {}
+
+    // Serializable dashboard alert payload shared inside dashboard notification snapshots.
+    record AlertNotification(
+            String alertId,
+            AlertType type,
+            AlertSeverity severity,
+            AlertStatus status,
+            String location,
+            String description,
+            long timestampEpochMillis
+    ) implements Serializable {}
+
+    // Sent from the Alert Manager to dashboards as a full alert snapshot.
+    record AlertNotificationMsg(
+            AlertNotification[] alerts,
+            long timestampEpochMillis
+    ) implements Msg {}
+
+    // Sent from the Employee Dashboard when an alert is acknowledged or resolved.
+    record AlertStatusUpdateMsg(
+            String alertId,
+            AlertStatus newStatus,
+            String employeeId,
+            long timestampEpochMillis
+    ) implements Msg {}
+
+    // Sent from the Employee Dashboard when staff acknowledge an alert.
+    record AlertAcknowledgementMsg(
+            String alertId,
+            String employeeId,
+            long timestampEpochMillis
+    ) implements Msg {}
+
+    // Serializable log entry shared with the Log Store.
+    record LogRecord(
+            String logId,
+            String logType,
+            String source,
+            String description,
+            String relatedAlertId,
+            long timestampEpochMillis
+    ) implements Serializable {}
+
+    // Sent to the Log Store to persist a log record.
+    record LogWriteRequestMsg(LogRecord record) implements Msg {}
+
+    // Returned by the Log Store after attempting to persist a log record.
+    record LogWriteResponseMsg(String logId, boolean success, String message) implements Msg {}
+
+    // Sent to the Log Store to query logs for a type and time range.
+    record LogReadRequestMsg(
+            String requestId,
+            String logType,
+            long startTimeEpochMillis,
+            long endTimeEpochMillis
+    ) implements Msg {}
+
+    // Returned by the Log Store with log query results.
+    record LogReadResponseMsg(
+            String requestId,
+            LogRecord[] records,
+            boolean success,
+            String message
+    ) implements Msg {}
+
+    // Sent to the Log Store to delete records related to a specific alert.
+    record LogDeleteRequestMsg(
+            String requestId,
+            String relatedAlertId
+    ) implements Msg {}
+
+    // Returned by the Log Store after deleting records related to a specific alert.
+    record LogDeleteResponseMsg(
+            String requestId,
+            int deletedCount,
+            boolean success,
+            String message
+    ) implements Msg {}
+
+    // Serializable member entry payload written to the Log Store by the door scanner.
+    record MemberEnterRecord(
+            String description,
+            int month,
+            int day,
+            int year,
+            String time
+    ) implements Serializable {}
+
+    // Sent to the Log Store when a member enters through the door scanner.
+    record MemberEnter(MemberEnterRecord record) implements Msg {}
+
+    // Sent to the Log Store to retrieve the current machine data list.
+    record RequestMachineData() implements Msg {}
+
+    // Returned by the Log Store with the current machine data list.
+    record MachineDataResponseMsg(
+            MachineData[] machineData,
+            boolean success,
+            String message
+    ) implements Msg {}
 }
