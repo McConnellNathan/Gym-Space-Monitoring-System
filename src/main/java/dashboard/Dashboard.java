@@ -1,9 +1,9 @@
-package main.java.Dashboard;
+package dashboard;
 
-import main.java.DataStore.Employee;
-import main.java.DataStore.MachineData;
-import main.java.protocol.Msg;
-import main.java.utility.RemoteMessageClient;
+import datastore.Employee;
+import datastore.MachineData;
+import protocol.Msg;
+import utility.RemoteMessageClient;
 
 import java.io.Console;
 import java.io.IOException;

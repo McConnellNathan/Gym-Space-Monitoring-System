@@ -1,6 +1,6 @@
-package main.java.AlertManager;
+package alertmanager;
 
-import main.java.protocol.Msg;
+import protocol.Msg;
 
 /**
  * Internal Alert Manager model created from incoming hazard detections.

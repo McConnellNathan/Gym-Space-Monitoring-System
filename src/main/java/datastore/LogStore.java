@@ -1,8 +1,8 @@
-package main.java.DataStore;
+package datastore;
 
-import main.java.protocol.Envelope;
-import main.java.protocol.Msg;
-import main.java.utility.Server;
+import protocol.Envelope;
+import protocol.Msg;
+import utility.Server;
 
 import java.io.IOException;
 import java.time.DayOfWeek;

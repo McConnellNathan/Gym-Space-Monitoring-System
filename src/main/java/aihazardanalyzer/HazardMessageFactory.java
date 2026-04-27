@@ -1,6 +1,6 @@
-package main.java.aihazardanalyzer;
+package aihazardanalyzer;
 
-import main.java.protocol.Msg;
+import protocol.Msg;
 
 import java.util.UUID;
 

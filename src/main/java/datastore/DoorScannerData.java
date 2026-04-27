@@ -1,4 +1,4 @@
-package main.java.DataStore;
+package datastore;
 
 /**
  * Placeholder for future persisted door scanner data models.

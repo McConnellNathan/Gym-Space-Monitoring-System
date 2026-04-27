@@ -1,6 +1,6 @@
-package main.java.utility;
+package utility;
 
-import main.java.protocol.Msg;
+import protocol.Msg;
 
 import java.io.Closeable;
 import java.io.IOException;

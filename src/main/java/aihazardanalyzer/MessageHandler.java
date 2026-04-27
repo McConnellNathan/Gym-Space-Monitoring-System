@@ -1,6 +1,6 @@
-package main.java.aihazardanalyzer;
+package aihazardanalyzer;
 
-import main.java.utility.RemoteMessageClient;
+import utility.RemoteMessageClient;
 
 import java.io.IOException;
 

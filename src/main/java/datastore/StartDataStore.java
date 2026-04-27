@@ -1,4 +1,4 @@
-package main.java.DataStore;
+package datastore;
 
 /**
  * Command-line entry point for running the data-store services together.

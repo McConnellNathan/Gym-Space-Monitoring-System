@@ -210,7 +210,7 @@ def main() -> int:
                 *java_command,
                 "-cp",
                 classpath,
-                "main.java.DataStore.StartDataStore",
+                "datastore.StartDataStore",
             ],
             project_dir,
         )
@@ -225,7 +225,7 @@ def main() -> int:
                 *java_command,
                 "-cp",
                 classpath,
-                "main.java.AlertManager.StartAlertManager",
+                "alertmanager.StartAlertManager",
             ],
             project_dir,
         )
