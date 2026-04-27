@@ -44,10 +44,10 @@ public class DoorScannerDemo extends Application {
 
         try {
             logStoreClient = new RemoteMessageClient(LOG_STORE_HOST, LOG_STORE_PORT);
-            System.out.printf("[DoorScannerDemo] Connected to LogStore at %s:%d%n",
+            System.out.printf("Connected to LogStore at %s:%d%n",
                     LOG_STORE_HOST, LOG_STORE_PORT);
         } catch (IOException e) {
-            System.err.println("[DoorScannerDemo] Could not connect to LogStore: " + e.getMessage());
+            System.err.println("Could not connect to LogStore: " + e.getMessage());
         }
 
         scanField.setOnAction(event -> {
@@ -64,7 +64,7 @@ public class DoorScannerDemo extends Application {
                 timestampLabel.setText("Timestamp: " + nowString());
                 notesLabel.setText("Notes: " + safeValue(result.getNotes()));
 
-                System.out.println("[DoorScannerDemo] Invalid scan: " + rawScan);
+                System.out.println("Invalid scan: " + rawScan);
 
                 scanField.clear();
                 scanField.requestFocus();
@@ -87,7 +87,7 @@ public class DoorScannerDemo extends Application {
             timestampLabel.setText("Timestamp: " + nowString());
             notesLabel.setText("Notes: Entry recorded");
 
-            System.out.printf("[DoorScannerDemo] %s (%s) %s%n", memberName, memberId, action);
+            System.out.printf("%s (%s) %s%n", memberName, memberId, action);
 
             sendMemberEntryToLogStore(memberName, action);
 
@@ -119,7 +119,7 @@ public class DoorScannerDemo extends Application {
 
     private void sendMemberEntryToLogStore(String memberName, String action) {
         if (logStoreClient == null) {
-            System.err.println("[DoorScannerDemo] LogStore client is not connected.");
+            System.err.println("LogStore client is not connected.");
             return;
         }
 
@@ -137,9 +137,9 @@ public class DoorScannerDemo extends Application {
             Msg.MemberEnter msg = new Msg.MemberEnter(record);
             Msg response = logStoreClient.sendAndRead(msg);
 
-            System.out.println("[DoorScannerDemo] LogStore response: " + response);
+            System.out.println("LogStore response: " + response);
         } catch (Exception e) {
-            System.err.println("[DoorScannerDemo] Failed to send member entry to LogStore: " + e.getMessage());
+            System.err.println("Failed to send member entry to LogStore: " + e.getMessage());
         }
     }
 
