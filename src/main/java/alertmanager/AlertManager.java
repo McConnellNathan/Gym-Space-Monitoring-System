@@ -1,10 +1,10 @@
-package AlertManager;
+package main.java.AlertManager;
 
-import protocol.Envelope;
-import protocol.Msg;
-import protocol.ReplyChannel;
-import utility.RemoteMessageClient;
-import utility.Server;
+import main.java.protocol.Envelope;
+import main.java.protocol.Msg;
+import main.java.protocol.ReplyChannel;
+import main.java.utility.RemoteMessageClient;
+import main.java.utility.Server;
 
 import java.io.IOException;
 import java.util.ArrayList;

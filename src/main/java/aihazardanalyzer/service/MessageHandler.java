@@ -1,6 +1,7 @@
 package aihazardanalyzer.service;
 
 import utility.RemoteMessageClient;
+
 import java.io.IOException;
 
 public final class MessageHandler implements AutoCloseable {
@@ -61,10 +62,6 @@ public final class MessageHandler implements AutoCloseable {
 
     public synchronized void sendImproperEquipmentUseMessage(String location, double confidence) throws IOException {
         alertManagerClient.send(HazardMessageFactory.buildImproperEquipmentUseMessage(location, confidence));
-    }
-
-    public synchronized void sendSoundDisturbanceMessage(String location, double confidence) throws IOException {
-        alertManagerClient.send(HazardMessageFactory.buildSoundDisturbanceMessage(location, confidence));
     }
 
     @Override

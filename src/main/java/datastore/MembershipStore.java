@@ -1,8 +1,9 @@
-package DataStore;
+package main.java.DataStore;
 
-import protocol.Envelope;
-import protocol.Msg;
-import utility.Server;
+import main.java.protocol.Envelope;
+import main.java.protocol.Msg;
+import main.java.utility.Server;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
