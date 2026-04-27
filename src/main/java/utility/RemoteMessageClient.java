@@ -30,6 +30,13 @@ public class RemoteMessageClient implements Closeable {
         this.in = new ObjectInputStream(socket.getInputStream());
     }
 
+    public RemoteMessageClient(String host, int port, Msg initialMessage) throws IOException {
+        this(host, port);
+        if (initialMessage != null) {
+            send(initialMessage);
+        }
+    }
+
     public String host() {
         return host;
     }

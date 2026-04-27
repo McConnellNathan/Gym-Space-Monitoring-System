@@ -1,5 +1,7 @@
 package protocol;
 
+import main.java.DataStore.MachineData;
+
 import java.io.Serializable;
 
 /**
@@ -65,13 +67,14 @@ public interface Msg extends Serializable {
 
     enum AlertStatus {
         ACTIVE,
-        ACKNOWLEDGED,
         RESOLVED
     }
 
     record Ping() implements Msg {}
 
     record Pong() implements Msg {}
+
+    record DashboardConnected() implements Msg {}
 
     // Generic error response used when a request cannot be processed.
     record ErrorMsg(int code, int spotID, String message) implements Msg {}
@@ -82,24 +85,27 @@ public interface Msg extends Serializable {
 
     // Sent from the AI Hazard Analyzer to report a newly detected hazard.
     record HazardDetectionMsg(
-            String detectionId,
             AlertType type,
-            int zoneId,
             String location,
             double confidence,
             String description,
             long timestampEpochMillis
     ) implements Msg {}
 
-    // Sent from the Alert Manager to the Employee Dashboard to display an alert.
-    record AlertNotificationMsg(
+    // Serializable dashboard alert payload shared inside dashboard notification snapshots.
+    record AlertNotification(
             String alertId,
             AlertType type,
             AlertSeverity severity,
             AlertStatus status,
-            int zoneId,
             String location,
             String description,
+            long timestampEpochMillis
+    ) implements Serializable {}
+
+    // Sent from the Alert Manager to dashboards as a full alert snapshot.
+    record AlertNotificationMsg(
+            AlertNotification[] alerts,
             long timestampEpochMillis
     ) implements Msg {}
 
@@ -124,7 +130,6 @@ public interface Msg extends Serializable {
             String logType,
             String source,
             String description,
-            int zoneId,
             String relatedAlertId,
             long timestampEpochMillis
     ) implements Serializable {}
@@ -161,6 +166,28 @@ public interface Msg extends Serializable {
     record LogDeleteResponseMsg(
             String requestId,
             int deletedCount,
+            boolean success,
+            String message
+    ) implements Msg {}
+
+    // Serializable member entry payload written to the Log Store by the door scanner.
+    record MemberEnterRecord(
+            String description,
+            int month,
+            int day,
+            int year,
+            String time
+    ) implements Serializable {}
+
+    // Sent to the Log Store when a member enters through the door scanner.
+    record MemberEnter(MemberEnterRecord record) implements Msg {}
+
+    // Sent to the Log Store to retrieve the current machine data list.
+    record RequestMachineData() implements Msg {}
+
+    // Returned by the Log Store with the current machine data list.
+    record MachineDataResponseMsg(
+            MachineData[] machineData,
             boolean success,
             String message
     ) implements Msg {}

@@ -12,100 +12,87 @@ public final class HazardMessageFactory {
     private HazardMessageFactory() {
     }
 
-    public static Msg.HazardDetectionMsg buildFallDetectionMessage(int zoneId, String location, double confidence) {
+    public static Msg.HazardDetectionMsg buildFallDetectionMessage(String location, double confidence) {
         return buildMessage(
                 Msg.AlertType.FALL,
-                zoneId,
                 location,
                 confidence,
-                "Possible fall detected in zone " + zoneId
+                "Possible fall detected"
         );
     }
 
-    public static Msg.HazardDetectionMsg buildInjuryDetectionMessage(int zoneId, String location, double confidence) {
+    public static Msg.HazardDetectionMsg buildInjuryDetectionMessage(String location, double confidence) {
         return buildMessage(
                 Msg.AlertType.INJURY,
-                zoneId,
                 location,
                 confidence,
-                "Possible injury detected in zone " + zoneId
+                "Possible injury detected"
         );
     }
 
-    public static Msg.HazardDetectionMsg buildAggressionDetectionMessage(int zoneId, String location, double confidence) {
+    public static Msg.HazardDetectionMsg buildAggressionDetectionMessage(String location, double confidence) {
         return buildMessage(
                 Msg.AlertType.AGGRESSION,
-                zoneId,
                 location,
                 confidence,
-                "Possible aggression detected in zone " + zoneId
+                "Possible aggression detected"
         );
     }
 
     public static Msg.HazardDetectionMsg buildOvercrowdingMessage(
-            int zoneId,
             String location,
             double confidence,
             int estimatedPeople
     ) {
         return buildMessage(
                 Msg.AlertType.OVERCROWDING,
-                zoneId,
                 location,
                 confidence,
-                "Possible overcrowding detected in zone " + zoneId + ". Estimated people: " + estimatedPeople
+                "Possible overcrowding detected. Estimated people: " + estimatedPeople
         );
     }
 
-    public static Msg.HazardDetectionMsg buildWalkwayObstructionMessage(int zoneId, String location, double confidence) {
+    public static Msg.HazardDetectionMsg buildWalkwayObstructionMessage(String location, double confidence) {
         return buildMessage(
                 Msg.AlertType.WALKWAY_OBSTRUCTION,
-                zoneId,
                 location,
                 confidence,
-                "Possible walkway obstruction detected in zone " + zoneId
+                "Possible walkway obstruction detected"
         );
     }
 
     public static Msg.HazardDetectionMsg buildImproperEquipmentUseMessage(
-            int zoneId,
             String location,
             double confidence
     ) {
         return buildMessage(
                 Msg.AlertType.IMPROPER_EQUIPMENT_USE,
-                zoneId,
                 location,
                 confidence,
-                "Possible improper equipment use detected in zone " + zoneId
+                "Possible improper equipment use detected"
         );
     }
 
     public static Msg.HazardDetectionMsg buildSoundDisturbanceMessage(
-            int zoneId,
             String location,
             double confidence
     ) {
         return buildMessage(
                 Msg.AlertType.SOUND_DISTURBANCE,
-                zoneId,
                 location,
                 confidence,
-                "Possible sound disturbance detected in zone " + zoneId
+                "Possible sound disturbance detected."
         );
     }
 
     private static Msg.HazardDetectionMsg buildMessage(
             Msg.AlertType type,
-            int zoneId,
             String location,
             double confidence,
             String description
     ) {
         return new Msg.HazardDetectionMsg(
-                UUID.randomUUID().toString(),
                 type,
-                zoneId,
                 location,
                 confidence,
                 description,

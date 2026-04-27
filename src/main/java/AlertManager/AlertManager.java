@@ -2,10 +2,13 @@ package AlertManager;
 
 import protocol.Envelope;
 import protocol.Msg;
+import protocol.ReplyChannel;
 import utility.RemoteMessageClient;
 import utility.Server;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -15,6 +18,7 @@ public class AlertManager extends Server {
     private static final int ALERT_NOT_FOUND_ERROR_CODE = -101;
 
     private final ConcurrentHashMap<String, Alert> activeAlerts = new ConcurrentHashMap<>();
+    private final ArrayList<ReplyChannel> dashboardClients = new ArrayList<>();
     private RemoteMessageClient logStoreClient;
 
     /**
@@ -26,8 +30,17 @@ public class AlertManager extends Server {
         super(port);
     }
 
+    public AlertManager(String host, int port) {
+        super(host, port);
+    }
+
     public AlertManager(int port, String logStoreHost, int logStorePort) {
         this(port);
+        connectToLogStore(logStoreHost, logStorePort);
+    }
+
+    public AlertManager(String host, int port, String logStoreHost, int logStorePort) {
+        this(host, port);
         connectToLogStore(logStoreHost, logStorePort);
     }
 
@@ -37,6 +50,11 @@ public class AlertManager extends Server {
 
         try {
             switch (msg) {
+                case Msg.DashboardConnected ignored -> {
+                    registerDashboard(env.replyTo());
+                    NotifyDashboards();
+                }
+                case Msg.DisconnectMsg ignored -> unregisterDashboard(env.replyTo());
                 case Msg.HazardDetectionMsg hazardDetectionMsg -> handleHazardDetection(env, hazardDetectionMsg);
                 case Msg.AlertAcknowledgementMsg acknowledgementMsg -> handleAlertAcknowledgement(env, acknowledgementMsg);
                 case Msg.AlertStatusUpdateMsg statusUpdateMsg -> {
@@ -52,7 +70,7 @@ public class AlertManager extends Server {
 
                     Alert updated = withStatus(existing, statusUpdateMsg.newStatus());
                     applyAlertStatusChange(updated, statusUpdateMsg.employeeId());
-                    env.replyTo().send(toNotification(updated));
+                    NotifyDashboards();
                 }
                 case Msg.Ping ignored -> env.replyTo().send(new Msg.Pong());
                 default -> env.replyTo().send(new Msg.ErrorMsg(
@@ -80,36 +98,23 @@ public class AlertManager extends Server {
 
         Alert resolvedAlert = withStatus(existing, Msg.AlertStatus.RESOLVED);
         applyAlertStatusChange(resolvedAlert, acknowledgementMsg.employeeId());
-        env.replyTo().send(toNotification(resolvedAlert));
+        NotifyDashboards();
     }
 
     private void handleHazardDetection(Envelope env, Msg.HazardDetectionMsg hazardDetectionMsg) throws IOException {
-        Alert alert = switch (hazardDetectionMsg.type()) {
-            case FALL,
-                 INJURY,
-                 AGGRESSION,
-                 OVERCROWDING,
-                 WALKWAY_OBSTRUCTION,
-                 IMPROPER_EQUIPMENT_USE,
-                 MACHINE_MALFUNCTION,
-                 ENVIRONMENTAL_HAZARD,
-                 SOUND_DISTURBANCE,
-                 SYSTEM_ERROR -> createAlert(hazardDetectionMsg);
-        };
+        Alert alert = createAlert(hazardDetectionMsg);
 
         activeAlerts.put(alert.alertId(), alert);
         writeToLogs(alert, "CREATED");
 
         System.out.printf(
-                "[AlertManager] Hazard detection received id=%s type=%s zone=%d -> alertId=%s severity=%s%n",
-                hazardDetectionMsg.detectionId(),
+                "[AlertManager] Hazard detection received id=%s type=%s -> alertId=%s severity=%s%n",
                 hazardDetectionMsg.type(),
-                hazardDetectionMsg.zoneId(),
                 alert.alertId(),
                 alert.severity()
         );
 
-        env.replyTo().send(toNotification(alert));
+        NotifyDashboards();
     }
 
     private void applyAlertStatusChange(Alert alert, String employeeId) {
@@ -136,7 +141,6 @@ public class AlertManager extends Server {
                 alert.type(),
                 alert.severity(),
                 status,
-                alert.zoneId(),
                 alert.location(),
                 alert.description(),
                 alert.confidence(),
@@ -165,7 +169,6 @@ public class AlertManager extends Server {
                 "ALERT_" + action,
                 "AlertManager",
                 action + ": " + alert.description() + " [status=" + alert.status() + ", severity=" + alert.severity() + "]",
-                alert.zoneId(),
                 alert.alertId(),
                 System.currentTimeMillis()
         );
@@ -221,17 +224,57 @@ public class AlertManager extends Server {
         System.out.printf("[AlertManager] Closed alert %s status=%s%n", alert.alertId(), alert.status());
     }
 
-    private Msg.AlertNotificationMsg toNotification(Alert alert) {
-        return new Msg.AlertNotificationMsg(
+    private Msg.AlertNotification toNotification(Alert alert) {
+        return new Msg.AlertNotification(
                 alert.alertId(),
                 alert.type(),
                 alert.severity(),
                 alert.status(),
-                alert.zoneId(),
                 alert.location(),
                 alert.description(),
                 alert.timestampEpochMillis()
         );
+    }
+
+    private void registerDashboard(ReplyChannel replyChannel) {
+        if (dashboardClients.contains(replyChannel)) {
+            return;
+        }
+
+        dashboardClients.add(replyChannel);
+        System.out.printf("[AlertManager] Dashboard connected. totalDashboards=%d%n", dashboardClients.size());
+    }
+
+    private void unregisterDashboard(ReplyChannel replyChannel) {
+        if (dashboardClients.remove(replyChannel)) {
+            System.out.printf("[AlertManager] Dashboard disconnected. totalDashboards=%d%n", dashboardClients.size());
+        }
+    }
+
+    private void NotifyDashboards() {
+        ArrayList<Alert> activeAlertsSnapshot = new ArrayList<>(activeAlerts.values());
+        Msg.AlertNotification[] notifications = activeAlertsSnapshot.stream()
+                .map(this::toNotification)
+                .toArray(Msg.AlertNotification[]::new);
+        Msg.AlertNotificationMsg alertNotificationMsg = new Msg.AlertNotificationMsg(
+                notifications,
+                System.currentTimeMillis()
+        );
+
+        Iterator<ReplyChannel> iterator = dashboardClients.iterator();
+        while (iterator.hasNext()) {
+            ReplyChannel dashboardClient = iterator.next();
+            try {
+                dashboardClient.send(alertNotificationMsg);
+            } catch (Exception e) {
+                iterator.remove();
+                dashboardClient.close();
+                System.err.printf(
+                        "[AlertManager] Removed disconnected dashboard while notifying: %s%n",
+                        e.getMessage()
+                );
+            }
+        }
     }
 
     public synchronized void connectToLogStore(String host, int port) {

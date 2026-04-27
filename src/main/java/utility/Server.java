@@ -3,6 +3,7 @@ package utility;
 import protocol.Envelope;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
@@ -77,11 +78,26 @@ public abstract class Server implements Runnable, AutoCloseable {
 
     /**
      * Create the inital set up of the server for the Processor waiting to be started
+     * note that this constructor to bind to localhost, and all related ips of machine
      * @param port give server listening port
      */
     public Server(int port) {
         try {
             this.server = new ServerSocket(port);
+            this.server.setReuseAddress(true);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Use this constructor if you specifically only want to listen on a single ip of the machine like local host
+     * @param host
+     * @param port
+     */
+    public Server(String host, int port) {
+        try {
+            this.server = new ServerSocket(port, 50, InetAddress.getByName(host));
             this.server.setReuseAddress(true);
         } catch (IOException e) {
             throw new RuntimeException(e);
