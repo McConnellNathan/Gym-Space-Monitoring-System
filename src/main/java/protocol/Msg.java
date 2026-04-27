@@ -1,5 +1,6 @@
 package protocol;
 
+import DataStore.Employee;
 import DataStore.MachineData;
 
 import java.io.Serializable;
@@ -189,6 +190,42 @@ public interface Msg extends Serializable {
     record MachineDataResponseMsg(
             MachineData[] machineData,
             boolean success,
+            String message
+    ) implements Msg {}
+
+    // Sent to the Log Store to retrieve the current member entry list.
+    record RequestMemberData() implements Msg {}
+
+    // Returned by the Log Store with the current member entry list.
+    record MemberDataResponseMsg(
+            MemberEnterRecord[] memberData,
+            boolean success,
+            String message
+    ) implements Msg {}
+
+    // Sent to the Membership Store to authenticate and retrieve an employee by username.
+    record RequestEmployee(
+            String employeeUsername,
+            String password
+    ) implements Msg {}
+
+    // Returned by the Membership Store after an employee lookup/authentication attempt.
+    record EmployeeResponseMsg(
+            Employee employee,
+            boolean success,
+            String message
+    ) implements Msg {}
+
+    // Sent to the Membership Store to verify manager credentials for restricted actions.
+    record VerifyManager(
+            String employeeUsername,
+            String password
+    ) implements Msg {}
+
+    // Returned by the Membership Store after manager credential verification.
+    record VerifyManagerResponse(
+            boolean validManager,
+            String employeeId,
             String message
     ) implements Msg {}
 }
