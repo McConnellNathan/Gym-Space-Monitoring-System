@@ -90,21 +90,6 @@ public class AlertManager extends Server {
                 case Msg.DisconnectMsg ignored -> unregisterDashboard(env.replyTo());
                 case Msg.HazardDetectionMsg hazardDetectionMsg -> handleHazardDetection(env, hazardDetectionMsg);
                 case Msg.AlertAcknowledgementMsg acknowledgementMsg -> handleAlertAcknowledgement(env, acknowledgementMsg);
-                case Msg.AlertStatusUpdateMsg statusUpdateMsg -> {
-                    Alert existing = activeAlerts.get(statusUpdateMsg.alertId());
-                    if (existing == null) {
-                        env.replyTo().send(new Msg.ErrorMsg(
-                                ALERT_NOT_FOUND_ERROR_CODE,
-                                -1,
-                                "Alert not found: " + statusUpdateMsg.alertId()
-                        ));
-                        return;
-                    }
-
-                    Alert updated = withStatus(existing, statusUpdateMsg.newStatus());
-                    applyAlertStatusChange(updated, statusUpdateMsg.employeeId());
-                    NotifyDashboards();
-                }
                 case Msg.Ping ignored -> env.replyTo().send(new Msg.Pong());
                 default -> env.replyTo().send(new Msg.ErrorMsg(
                         UNKNOWN_MESSAGE_ERROR_CODE,

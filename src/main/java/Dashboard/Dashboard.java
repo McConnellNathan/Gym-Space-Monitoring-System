@@ -37,8 +37,8 @@ public class Dashboard implements AutoCloseable {
     private final AtomicBoolean listeningForAlerts = new AtomicBoolean(false);
 
     private Thread alertListenerThread;
-    private Employee currentEmployee;
-    private Employee.EmployeeStatus currentEmployeeStatus;
+    private volatile Employee currentEmployee;
+    private volatile Employee.EmployeeStatus currentEmployeeStatus;
 
     /**
      * Creates a dashboard client using all default backend service endpoints.
@@ -97,14 +97,14 @@ public class Dashboard implements AutoCloseable {
     /**
      * Sends a one-way protocol message to the Alert Manager.
      */
-    public synchronized void sendToAlertManager(Msg msg) throws IOException {
+    public void sendToAlertManager(Msg msg) throws IOException {
         alertManagerClient.send(msg);
     }
 
     /**
      * Sends a direct alert acknowledgement with a known employee id.
      */
-    public synchronized void acknowledgeAlert(String alertId, String employeeId) throws IOException {
+    public void acknowledgeAlert(String alertId, String employeeId) throws IOException {
         sendToAlertManager(new Msg.AlertAcknowledgementMsg(
                 alertId,
                 employeeId,
@@ -120,7 +120,7 @@ public class Dashboard implements AutoCloseable {
      *
      * @return true when an acknowledgement message was sent
      */
-    public synchronized boolean acknowledgeAlert(Msg.AlertNotification alert)
+    public boolean acknowledgeAlert(Msg.AlertNotification alert)
             throws IOException, ClassNotFoundException {
         if (alert == null) {
             return false;
@@ -155,21 +155,21 @@ public class Dashboard implements AutoCloseable {
     /**
      * Sends a one-way protocol message to the Log Store.
      */
-    public synchronized void sendToLogStore(Msg msg) throws IOException {
+    public void sendToLogStore(Msg msg) throws IOException {
         logStoreClient.send(msg);
     }
 
     /**
      * Reads the next message from the Log Store connection.
      */
-    public synchronized Msg readFromLogStore() throws IOException, ClassNotFoundException {
+    public Msg readFromLogStore() throws IOException, ClassNotFoundException {
         return logStoreClient.read();
     }
 
     /**
      * Sends a request to the Log Store and waits for its response.
      */
-    public synchronized Msg requestFromLogStore(Msg msg) throws IOException, ClassNotFoundException {
+    public Msg requestFromLogStore(Msg msg) throws IOException, ClassNotFoundException {
         return logStoreClient.sendAndRead(msg);
     }
 
@@ -178,7 +178,7 @@ public class Dashboard implements AutoCloseable {
      *
      * @return machine usage records, or null when the current user is not a manager
      */
-    public synchronized MachineData[] requestMachineUsageData() throws IOException, ClassNotFoundException {
+    public MachineData[] requestMachineUsageData() throws IOException, ClassNotFoundException {
         if (!isCurrentUserManager()) {
             return null;
         }
@@ -196,7 +196,7 @@ public class Dashboard implements AutoCloseable {
      *
      * @return member entry records, or null when the current user is not a manager
      */
-    public synchronized Msg.MemberEnterRecord[] requestMemberUsageData() throws IOException, ClassNotFoundException {
+    public Msg.MemberEnterRecord[] requestMemberUsageData() throws IOException, ClassNotFoundException {
         if (!isCurrentUserManager()) {
             return null;
         }
@@ -212,14 +212,14 @@ public class Dashboard implements AutoCloseable {
     /**
      * Sends a request to the Membership Store and waits for its response.
      */
-    public synchronized Msg requestFromMembershipStore(Msg msg) throws IOException, ClassNotFoundException {
+    public Msg requestFromMembershipStore(Msg msg) throws IOException, ClassNotFoundException {
         return membershipStoreClient.sendAndRead(msg);
     }
 
     /**
      * Authenticates an employee by username and password through the Membership Store.
      */
-    public synchronized Msg requestEmployee(String employeeUsername, String password)
+    public Msg requestEmployee(String employeeUsername, String password)
             throws IOException, ClassNotFoundException {
         return requestFromMembershipStore(new Msg.RequestEmployee(employeeUsername, password));
     }
@@ -229,7 +229,7 @@ public class Dashboard implements AutoCloseable {
      *
      * @return employee status on success, or null on failed authentication
      */
-    public synchronized Employee.EmployeeStatus signIn(String employeeUsername, String password)
+    public Employee.EmployeeStatus signIn(String employeeUsername, String password)
             throws IOException, ClassNotFoundException {
         Msg response = requestEmployee(employeeUsername, password);
         if (response instanceof Msg.EmployeeResponseMsg employeeResponse && employeeResponse.employee() != null) {
@@ -246,7 +246,7 @@ public class Dashboard implements AutoCloseable {
     /**
      * Clears the current dashboard employee session.
      */
-    public synchronized void signOut() {
+    public void signOut() {
         currentEmployee = null;
         currentEmployeeStatus = null;
         // TODO: Return to the sign-in page.
@@ -255,14 +255,14 @@ public class Dashboard implements AutoCloseable {
     /**
      * Returns the currently signed-in employee, if any.
      */
-    public synchronized Employee getCurrentEmployee() {
+    public Employee getCurrentEmployee() {
         return currentEmployee;
     }
 
     /**
      * Returns the role for the currently signed-in employee, if any.
      */
-    public synchronized Employee.EmployeeStatus getCurrentEmployeeStatus() {
+    public Employee.EmployeeStatus getCurrentEmployeeStatus() {
         return currentEmployeeStatus;
     }
 

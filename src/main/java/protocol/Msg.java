@@ -110,13 +110,13 @@ public interface Msg extends Serializable {
             long timestampEpochMillis
     ) implements Msg {}
 
-    // Sent from the Employee Dashboard when an alert is acknowledged or resolved.
-    record AlertStatusUpdateMsg(
-            String alertId,
-            AlertStatus newStatus,
-            String employeeId,
-            long timestampEpochMillis
-    ) implements Msg {}
+//    // Sent from the Employee Dashboard when an alert is acknowledged or resolved.
+//    record AlertStatusUpdateMsg(
+//            String alertId,
+//            AlertStatus newStatus,
+//            String employeeId,
+//            long timestampEpochMillis
+//    ) implements Msg {}
 
     // Sent from the Employee Dashboard when staff acknowledge an alert.
     record AlertAcknowledgementMsg(
