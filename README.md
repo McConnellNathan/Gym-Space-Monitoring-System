@@ -1,21 +1,21 @@
 # Gym-Space-Monitoring-System
 
 ## Maven Set Up (Please do this part to prevent package/import issues)
-In order to get the Gemini API pieces working I had to set up the project as a
-Maven project; this requires a specific file structure which I already set up and
-pushed to the repo. It also requires the use of a `pom.xml` file which I added.
+In order to get the Gemini API pieces working, I had to set up the project as a
+Maven project. This requires a specific file structure, which I already set up and
+pushed to the repo. It also requires the use of the `pom.xml` file, which I added.
 
-If IntelliJ doesn't automatically recognize the `pom.xml` file as a Maven project, in IntelliJ, you can
+If IntelliJ doesn't automatically recognize the `pom.xml` file as a Maven project, in IntelliJ you can
 right-click on the `pom.xml` file and select **"Add as Maven Project"**.
 This will allow you to use the dependencies specified in the `pom.xml` file.
-This is also make IntelliJ recognize the `src/main/java` directory as a source root, 
-which will allow you to import packages and classes correctly.
+It should also make IntelliJ recognize the `src/main/java` directory as a source root,
+which allows package declarations and imports to work correctly.
 
 If IntelliJ still doesn't recognize the Maven project, you can try refreshing
 the project by right-clicking on the project in the Project Explorer and
 selecting **"Maven" > "Reload Project"**.
 
-After that, just add packages to the `java` directory and add your code there.
+After that, just add packages under the `src/main/java` directory and add your code there.
 
 ## Gemini API Set Up
 To use the Gemini API, you will need to set up an API key.
