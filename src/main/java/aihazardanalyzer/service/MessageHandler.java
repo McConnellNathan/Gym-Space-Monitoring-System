@@ -44,6 +44,10 @@ public final class MessageHandler implements AutoCloseable {
         alertManagerClient.send(HazardMessageFactory.buildAggressionDetectionMessage(location, confidence));
     }
 
+    public void sendSoundDisturbanceMessage(String location, double confidence) throws IOException {
+        alertManagerClient.send(HazardMessageFactory.buildSoundDisturbanceMessage(location, confidence));
+    }
+
     public synchronized void sendOvercrowdingMessage(
             String location,
             double confidence,
@@ -73,4 +77,6 @@ public final class MessageHandler implements AutoCloseable {
             }
         }
     }
+
+
 }

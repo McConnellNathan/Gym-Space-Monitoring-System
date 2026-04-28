@@ -73,6 +73,18 @@ public final class HazardMessageFactory {
         );
     }
 
+    public static Msg.HazardDetectionMsg buildSoundDisturbanceMessage(
+            String location,
+            double confidence
+    ) {
+        return buildMessage(
+                Msg.AlertType.SOUND_DISTURBANCE,
+                location,
+                confidence,
+                "Possible sound disturbance detected"
+        );
+    }
+
     private static Msg.HazardDetectionMsg buildMessage(
             Msg.AlertType type,
             String location,
