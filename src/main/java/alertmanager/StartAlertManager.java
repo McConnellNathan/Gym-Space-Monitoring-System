@@ -1,4 +1,4 @@
-package alertmanager;
+package AlertManager;
 
 /**
  * Command-line entry point for running the Alert Manager server.
