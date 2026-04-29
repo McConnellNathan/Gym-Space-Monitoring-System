@@ -40,15 +40,12 @@ want to deal with the API key but has some code they want tested with it, just
 let me know and I can run it for you. Just message me, and I'll get to it as soon as I can.
 
 ## Running the Code
-In the `app` package, there are 3 different Java files that run the AI components
-independently if you want to test them. This will require you to have the API key set up
-and the Maven dependencies working.
-
-`DemoAiDashboard` and `ShortAiTest` will require a webcam plugged in and enabled to work.
-
-`ScannerGuiTest` will run without a webcam and without a scanner,
-but without a scanner it's kind of pointless to run. So if
-you want to borrow the scanner to mess with it just let me know.
+In the `app` package, there are a few different classes to run the demo.
+`DemoAiDashboard` is the main dashboard that shows all the results from Gemini. 
+It also has a webcam feed to show what Gemini is analyzing.
+`DoorScannerDemo` is for the Door Scanner demo.
+`DemoLauncher` spins up the Alert Manager and Log Store instances, then starts the 
+`DemoAiDashboard` and `DoorScannerDemo`. You can run that if you want to see everything.
 
 ## The Interesting AI Analysis Pieces
 There's a lot of little moving pieces to get all the API calls working and parsed

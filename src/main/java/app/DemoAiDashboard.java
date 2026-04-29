@@ -37,6 +37,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import aihazardanalyzer.service.MessageHandler;
+import soundmonitor.service.AudioAnalysisService;
 
 public class DemoAiDashboard extends Application {
     // AI and hardware service variables
@@ -64,6 +65,8 @@ public class DemoAiDashboard extends Application {
     private volatile boolean fallRunning = false;
     private volatile boolean walkwayRunning = false;
     private boolean lastAlarmState = false;
+    private AudioAnalysisService audioAnalysisService;
+    private volatile boolean audioAnalysisRunning = false;
 
     // Messaging variables
     private static final String CAMERA_LOCATION = "Demo Camera Zone";
@@ -94,6 +97,9 @@ public class DemoAiDashboard extends Application {
     private Label buzzerLabel;
     private Label buzzerReasonLabel;
     private Label audioLevelLabel;
+    private Label audioTypeLabel;
+    private Label audioConfidenceLabel;
+    private Label audioNotesLabel;
 
     private Timeline frameCaptureTimeline;
     private Timeline occupancyTimeline;
@@ -126,10 +132,24 @@ public class DemoAiDashboard extends Application {
         bulkyBuzzerService = new BulkyBuzzerService();
         bulkyBuzzerService.start();
 
+        audioAnalysisService = new AudioAnalysisService();
+
         alarmSoundPlayer = new AlarmSoundPlayer("/alarm.wav");
 
-        Label titleLabel = new Label("Gym Vision Demo");
-        titleLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold;");
+        Label occupancySectionLabel = new Label("Occupancy Analysis");
+        occupancySectionLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+
+        Label aggressionSectionLabel = new Label("Conflict Detection");
+        aggressionSectionLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+
+        Label fallSectionLabel = new Label("Fall Detection");
+        fallSectionLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+
+        Label walkwaySectionLabel = new Label("Walkway Monitoring");
+        walkwaySectionLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+
+        Label soundSectionLabel = new Label("Sound Monitoring");
+        soundSectionLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
 
         peopleCountLabel = new Label("People Count: --");
         sceneStatusLabel = new Label("Scene Status: --");
@@ -156,6 +176,10 @@ public class DemoAiDashboard extends Application {
         buzzerLabel = new Label("Bulky Buzzer: OFF");
         buzzerReasonLabel = new Label("Buzzer Reason: --");
         audioLevelLabel = new Label("Audio Level: --");
+        audioTypeLabel = new Label("Detected Sound Type: --");
+        audioConfidenceLabel = new Label("Sound Analysis Confidence: --");
+        audioNotesLabel = new Label("Sound Analysis Notes: --");
+        audioNotesLabel.setWrapText(true);
 
         try {
             messageHandler = MessageHandler.getInstance();
@@ -164,37 +188,76 @@ public class DemoAiDashboard extends Application {
             System.err.println("Could not connect to AlertManager: " + e.getMessage());
         }
 
-        VBox root = new VBox(
-                12,
-                titleLabel,
-                cameraView,
-
+        VBox occupancyBox = new VBox(
+                6,
+                occupancySectionLabel,
                 peopleCountLabel,
                 sceneStatusLabel,
                 occupancyConfidenceLabel,
-                occupancyNotesLabel,
+                occupancyNotesLabel
+        );
+        occupancyBox.setPadding(new Insets(10));
+        occupancyBox.setStyle("-fx-border-color: lightgray; -fx-border-radius: 6; -fx-background-radius: 6;");
 
+        VBox aggressionBox = new VBox(
+                6,
+                aggressionSectionLabel,
                 aggressionLabel,
                 aggressionConfidenceLabel,
-                aggressionNotesLabel,
+                aggressionNotesLabel
+        );
+        aggressionBox.setPadding(new Insets(10));
+        aggressionBox.setStyle("-fx-border-color: lightgray; -fx-border-radius: 6; -fx-background-radius: 6;");
 
+        VBox fallBox = new VBox(
+                6,
+                fallSectionLabel,
                 fallLabel,
                 fallConfidenceLabel,
-                fallNotesLabel,
+                fallNotesLabel
+        );
+        fallBox.setPadding(new Insets(10));
+        fallBox.setStyle("-fx-border-color: lightgray; -fx-border-radius: 6; -fx-background-radius: 6;");
 
+        VBox walkwayBox = new VBox(
+                6,
+                walkwaySectionLabel,
                 walkwayLabel,
                 walkwayConfidenceLabel,
-                walkwayNotesLabel,
+                walkwayNotesLabel
+        );
+        walkwayBox.setPadding(new Insets(10));
+        walkwayBox.setStyle("-fx-border-color: lightgray; -fx-border-radius: 6; -fx-background-radius: 6;");
 
+        VBox soundBox = new VBox(
+                6,
+                soundSectionLabel,
                 buzzerArmedLabel,
                 buzzerLabel,
                 buzzerReasonLabel,
-                audioLevelLabel
+                audioLevelLabel,
+                audioTypeLabel,
+                audioConfidenceLabel,
+                audioNotesLabel
+        );
+        soundBox.setPadding(new Insets(10));
+        soundBox.setStyle("-fx-border-color: lightgray; -fx-border-radius: 6; -fx-background-radius: 6;");
+
+        VBox root = new VBox(
+                14,
+                cameraView,
+                occupancyBox,
+                aggressionBox,
+                fallBox,
+                walkwayBox,
+                soundBox
         );
 
         root.setPadding(new Insets(20));
 
-        Scene scene = new Scene(root, 900, 950);
+        root.setPadding(new Insets(20));
+
+        Scene scene = new Scene(root, 900, 1175);
 
         scene.setOnKeyPressed(event -> {
             switch (event.getCode()) {
@@ -500,14 +563,26 @@ public class DemoAiDashboard extends Application {
                         1.0,
                         "Alarm activated manually."
                 );
+
+                audioTypeLabel.setText("Detected Sound Type: MANUAL_TRIGGER");
+                audioConfidenceLabel.setText("Sound Analysis Confidence: 1.00");
+                audioNotesLabel.setText("Sound Analysis Notes: Alarm activated manually.");
+
                 System.out.println("Audio AI skipped: manual trigger.");
-            } else if (buzzerState.getTriggerSource() == BuzzerTriggerSource.AUDIO_THRESHOLD
-                    && shouldSendAlert("SOUND_" + SOUND_LOCATION, ALERT_COOLDOWN_MS)) {
-                sendSoundAlertAsync(
-                        "SOUND_" + SOUND_LOCATION,
-                        SOUND_LOCATION,
-                        1.0
-                );
+            } else if (buzzerState.getTriggerSource() == BuzzerTriggerSource.AUDIO_THRESHOLD) {
+                audioTypeLabel.setText("Detected Sound Type: analyzing...");
+                audioConfidenceLabel.setText("Sound Analysis Confidence: --");
+                audioNotesLabel.setText("Sound Analysis Notes: Sending recent audio clip for analysis...");
+
+                analyzeRecentAudioClip();
+
+                if (shouldSendAlert("SOUND_" + SOUND_LOCATION, ALERT_COOLDOWN_MS)) {
+                    sendSoundAlertAsync(
+                            "SOUND_" + SOUND_LOCATION,
+                            SOUND_LOCATION,
+                            1.0
+                    );
+                }
             }
         }
 
@@ -657,6 +732,51 @@ public class DemoAiDashboard extends Application {
                 System.err.println("Failed to send sound alert: " + e.getMessage());
             }
         });
+    }
+
+    private void analyzeRecentAudioClip() {
+        if (audioAnalysisRunning) {
+            return;
+        }
+
+        audioAnalysisRunning = true;
+
+        Thread worker = new Thread(() -> {
+            try {
+                byte[] wavBytes = bulkyBuzzerService.getRecentAudioAsWav(1500);
+                AudioAnalysisResult result = audioAnalysisService.analyzeWavClip(wavBytes);
+                latestAudioResult = result;
+
+                Platform.runLater(() -> {
+                    audioTypeLabel.setText("Detected Sound Type: " + safeValue(result.getSoundType()));
+                    audioConfidenceLabel.setText(
+                            String.format("Sound Analysis Confidence: %.2f", result.getConfidence())
+                    );
+                    audioNotesLabel.setText("Sound Analysis Notes: " + safeValue(result.getNotes()));
+
+                    if (result.isTriggerAlarm()) {
+                        audioTypeLabel.setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
+                    } else {
+                        audioTypeLabel.setStyle("-fx-text-fill: green; -fx-font-weight: bold;");
+                    }
+                });
+            } catch (Exception e) {
+                Platform.runLater(() -> {
+                    audioTypeLabel.setText("Detected Sound Type: error");
+                    audioConfidenceLabel.setText("Sound Analysis Confidence: --");
+                    audioNotesLabel.setText("Sound Analysis Notes: " + e.getMessage());
+                });
+            } finally {
+                audioAnalysisRunning = false;
+            }
+        });
+
+        worker.setDaemon(true);
+        worker.start();
+    }
+
+    private String safeValue(String value) {
+        return value == null ? "--" : value;
     }
 
     public static void main(String[] args) {
