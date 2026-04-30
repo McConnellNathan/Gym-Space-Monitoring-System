@@ -1,4 +1,4 @@
-package DataStore;
+package datastore;
 
 import java.io.Serializable;
 

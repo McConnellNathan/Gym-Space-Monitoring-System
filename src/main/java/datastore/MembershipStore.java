@@ -1,4 +1,4 @@
-package DataStore;
+package datastore;
 
 import protocol.Envelope;
 import protocol.Msg;

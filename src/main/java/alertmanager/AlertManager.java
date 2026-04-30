@@ -1,4 +1,4 @@
-package AlertManager;
+package alertmanager;
 
 import protocol.Envelope;
 import protocol.Msg;

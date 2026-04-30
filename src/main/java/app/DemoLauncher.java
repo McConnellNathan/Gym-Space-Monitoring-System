@@ -1,7 +1,7 @@
 package app;
 
-import AlertManager.AlertManager;
-import DataStore.LogStore;
+import alertmanager.AlertManager;
+import datastore.LogStore;
 
 import java.io.File;
 import java.io.IOException;

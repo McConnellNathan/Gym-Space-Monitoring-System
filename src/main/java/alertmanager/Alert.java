@@ -1,4 +1,4 @@
-package AlertManager;
+package alertmanager;
 
 import protocol.Msg;
 
@@ -7,6 +7,8 @@ import protocol.Msg;
  *
  * <p>This is separate from protocol messages so the manager can track status and severity
  * while still sending compact dashboard snapshots.</p>
+ *
+ *
  */
 public record Alert(
         String alertId,
