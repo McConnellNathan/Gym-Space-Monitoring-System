@@ -200,7 +200,7 @@ public class AlertManager extends Server {
         Msg.LogRecord record = new Msg.LogRecord(
                 UUID.randomUUID().toString(),
                 "ALERT_" + action,
-                "AlertManager",
+                "alertmanager",
                 action + ": " + alert.description() + " [status=" + alert.status() + ", severity=" + alert.severity() + "]",
                 alert.alertId(),
                 System.currentTimeMillis()

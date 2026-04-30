@@ -2,8 +2,8 @@
 """
 Start the GSMS backend services from the project root above src/.
 
-The script compiles the Maven project, starts the DataStore services first,
-then starts the AlertManager connected to LogStore. Stop it with Ctrl+C.
+The script compiles the Maven project, starts the datastore services first,
+then starts the alertmanager connected to LogStore. Stop it with Ctrl+C.
 """
 
 from __future__ import annotations
@@ -160,7 +160,7 @@ def terminate(process: subprocess.Popen | None, name: str) -> None:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Start GSMS DataStore and AlertManager services.")
+    parser = argparse.ArgumentParser(description="Start GSMS datastore and alertmanager services.")
     parser.add_argument("--project-dir", type=Path, default=DEFAULT_PROJECT_DIR)
     parser.add_argument("--skip-compile", action="store_true")
     args = parser.parse_args()
@@ -217,7 +217,7 @@ def main() -> int:
         time.sleep(2)
 
         if data_store.poll() is not None:
-            print("DataStore exited before AlertManager could start.", file=sys.stderr)
+            print("datastore exited before alertmanager could start.", file=sys.stderr)
             return data_store.returncode or 1
 
         alert_manager = start_process(
@@ -232,18 +232,18 @@ def main() -> int:
 
         while True:
             if data_store.poll() is not None:
-                print("DataStore exited.", file=sys.stderr)
+                print("datastore exited.", file=sys.stderr)
                 return data_store.returncode or 1
             if alert_manager.poll() is not None:
-                print("AlertManager exited.", file=sys.stderr)
+                print("alertmanager exited.", file=sys.stderr)
                 return alert_manager.returncode or 1
             time.sleep(1)
     except KeyboardInterrupt:
         print("Shutdown requested.", flush=True)
         return 0
     finally:
-        terminate(alert_manager, "AlertManager")
-        terminate(data_store, "DataStore")
+        terminate(alert_manager, "alertmanager")
+        terminate(data_store, "datastore")
 
 
 if __name__ == "__main__":
