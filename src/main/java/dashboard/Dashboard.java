@@ -1,7 +1,7 @@
-package Dashboard;
+package dashboard;
 
-import DataStore.Employee;
-import DataStore.MachineData;
+import datastore.Employee;
+import datastore.MachineData;
 import protocol.Msg;
 import utility.RemoteMessageClient;
 
