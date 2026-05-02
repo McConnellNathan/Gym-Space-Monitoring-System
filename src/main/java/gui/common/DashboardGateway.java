@@ -15,4 +15,5 @@ public interface DashboardGateway {
     List<DashboardAlert> getActiveAlerts();
     boolean resolveAlert(String alertId);
     boolean resolveCriticalAlert(String alertId, String managerPin);
+    List<DashboardAlert> getResolvedAlertLogs();
 }

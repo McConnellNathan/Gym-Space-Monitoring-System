@@ -1,5 +1,6 @@
 package gui.manager;
 
+import gui.common.DashboardAlert;
 import gui.common.DashboardGateway;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -7,7 +8,8 @@ import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Circle;
+import java.time.LocalDateTime;
+import java.util.List;
 
 public class ManagerDashboardView {
 
@@ -18,6 +20,13 @@ public class ManagerDashboardView {
     private final DashboardGateway dashboard;
     private final StackPane contentPane = new StackPane();
     private Label pageTitle;
+    private VBox notificationPanel;
+    private VBox notificationList;
+    private Button notificationToggleButton;
+    private boolean notificationsCollapsed = false;
+    private int lastAlertCount = 0;
+    private final java.time.format.DateTimeFormatter timeFormatter =
+            java.time.format.DateTimeFormatter.ofPattern("MMM d, yyyy h:mm a");
 
     public ManagerDashboardView(DashboardGateway dashboard) {
         this.dashboard = dashboard;
@@ -29,11 +38,12 @@ public class ManagerDashboardView {
 
         VBox sidebar = buildSidebar();
         VBox mainArea = buildMainArea();
+        VBox alertPanel = buildNotificationPanel();
 
-        root.getChildren().addAll(sidebar, mainArea);
+        root.getChildren().addAll(sidebar, mainArea, alertPanel);
         HBox.setHgrow(mainArea, Priority.ALWAYS);
 
-        showClassesPage();
+        showDashboardPage();
 
         return root;
     }
@@ -48,13 +58,15 @@ public class ManagerDashboardView {
         logo.setTextFill(Color.web(DARK_RED));
         logo.setStyle("-fx-font-size: 52px;");
 
-        Button classesButton = navButton("▣  Classes");
+        Button dashboardButton = navButton("▣  Dashboard");
+        Button equipmentButton = navButton("▣  Equipment");
         Button occupancyButton = navButton("↗  Occupancy");
-        Button timesheetButton = navButton("◷  Daily Timesheet");
+        Button logsButton = navButton("▣  Alert Logs");
 
-        classesButton.setOnAction(e -> showClassesPage());
+        dashboardButton.setOnAction(e -> showDashboardPage());
+        equipmentButton.setOnAction(e -> showEquipmentPage());
         occupancyButton.setOnAction(e -> showOccupancyPage());
-        timesheetButton.setOnAction(e -> showTimesheetPage());
+        logsButton.setOnAction(e -> showAlertLogsPage());
 
         Region spacer = new Region();
         VBox.setVgrow(spacer, Priority.ALWAYS);
@@ -65,9 +77,10 @@ public class ManagerDashboardView {
 
         sidebar.getChildren().addAll(
                 logo,
-                classesButton,
+                dashboardButton,
+                equipmentButton,
                 occupancyButton,
-                timesheetButton,
+                logsButton,
                 new Separator(),
                 spacer,
                 settingsButton,
@@ -119,7 +132,7 @@ public class ManagerDashboardView {
         main.setPadding(new Insets(25));
         main.setStyle("-fx-background-color: " + TAN + ";");
 
-        pageTitle = new Label("Hello, Customer");
+        pageTitle = new Label("Hello, Manager");
         pageTitle.setTextFill(Color.web("#6B4A3A"));
         pageTitle.setStyle("-fx-font-size: 30px; -fx-font-weight: bold;");
 
@@ -137,7 +150,7 @@ public class ManagerDashboardView {
     }
 
     private void showClassesPage() {
-        pageTitle.setText("Hello, Customer");
+        pageTitle.setText("Hello, Manager");
 
         VBox page = new VBox(18);
         page.setPadding(new Insets(10));
@@ -260,5 +273,259 @@ public class ManagerDashboardView {
 
         page.getChildren().addAll(title, placeholder, buttons);
         contentPane.getChildren().setAll(page);
+    }
+
+    private VBox buildNotificationPanel() {
+        notificationPanel = new VBox(10);
+        notificationPanel.setPadding(new Insets(12));
+        notificationPanel.setPrefWidth(300);
+        notificationPanel.setStyle(
+                "-fx-background-color: #F6E4CE;" +
+                        "-fx-border-color: #1B3955;" +
+                        "-fx-border-width: 0 0 3 0;"
+        );
+
+        Label title = new Label("Alerts");
+        title.setTextFill(Color.web("#1B3955"));
+        title.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
+
+        notificationToggleButton = new Button("Hide");
+        notificationToggleButton.setOnAction(e -> toggleNotifications());
+
+        Button refreshButton = new Button("Refresh");
+        refreshButton.setOnAction(e -> refreshNotifications());
+
+        HBox header = new HBox(10, title, refreshButton, notificationToggleButton);
+        header.setAlignment(Pos.CENTER_LEFT);
+
+        notificationList = new VBox(8);
+
+        notificationPanel.getChildren().addAll(header, notificationList);
+
+        refreshNotifications();
+
+        return notificationPanel;
+    }
+
+    private void toggleNotifications() {
+        notificationsCollapsed = !notificationsCollapsed;
+
+        notificationList.setVisible(!notificationsCollapsed);
+        notificationList.setManaged(!notificationsCollapsed);
+
+        notificationToggleButton.setText(notificationsCollapsed ? "Show" : "Hide");
+    }
+
+    private void refreshNotifications() {
+        List<DashboardAlert> alerts = dashboard.getActiveAlerts();
+
+        if (alerts.size() > lastAlertCount && notificationsCollapsed) {
+            notificationsCollapsed = false;
+            notificationList.setVisible(true);
+            notificationList.setManaged(true);
+            notificationToggleButton.setText("Hide");
+        }
+
+        lastAlertCount = alerts.size();
+
+        notificationList.getChildren().clear();
+
+        for (DashboardAlert alert : alerts) {
+            notificationList.getChildren().add(buildAlertCard(alert));
+        }
+    }
+
+    private void showAlertLogsPage() {
+        pageTitle.setText("Alert Resolution Logs");
+
+        VBox page = new VBox(15);
+        page.setPadding(new Insets(20));
+
+        Label heading = new Label("Resolved Alerts");
+        heading.setTextFill(Color.web(DARK_RED));
+        heading.setStyle("-fx-font-size: 22px; -fx-font-weight: bold;");
+
+        VBox logList = new VBox(10);
+
+        List<DashboardAlert> logs = dashboard.getResolvedAlertLogs();
+
+        if (logs.isEmpty()) {
+            Label empty = new Label("No resolved alerts yet.");
+            empty.setTextFill(Color.web("#6B4A3A"));
+            empty.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
+            logList.getChildren().add(empty);
+        } else {
+            for (DashboardAlert alert : logs) {
+                logList.getChildren().add(buildLogCard(alert));
+            }
+        }
+
+        ScrollPane scrollPane = new ScrollPane(logList);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setStyle("-fx-background-color: transparent;");
+
+        page.getChildren().addAll(heading, scrollPane);
+        VBox.setVgrow(scrollPane, Priority.ALWAYS);
+
+        contentPane.getChildren().setAll(page);
+    }
+
+    private VBox buildLogCard(DashboardAlert alert) {
+        VBox card = new VBox(5);
+        card.setPadding(new Insets(12));
+        card.setStyle(
+                "-fx-background-color: white;" +
+                        "-fx-background-radius: 10;" +
+                        "-fx-border-radius: 10;" +
+                        "-fx-border-color: " + getAlertColor(alert) + ";" +
+                        "-fx-border-width: 2;"
+        );
+
+        Label title = new Label(alert.getSeverity() + ": " + alert.getTitle());
+        title.setTextFill(Color.web(getAlertColor(alert)));
+        title.setStyle("-fx-font-size: 15px; -fx-font-weight: bold;");
+
+        Label location = new Label("Location: " + alert.getLocation());
+        Label detectedTime = new Label("Detected: " + alert.getTime());
+        Label resolvedTime = new Label("Resolved: " + LocalDateTime.now().format(timeFormatter));
+        Label description = new Label(alert.getDescription());
+        description.setWrapText(true);
+
+        location.setTextFill(Color.web("#1B3955"));
+        detectedTime.setTextFill(Color.web("#1B3955"));
+        resolvedTime.setTextFill(Color.web("#1B3955"));
+        description.setTextFill(Color.web("#6B4A3A"));
+
+        card.getChildren().addAll(title, location, detectedTime, resolvedTime, description);
+
+        return card;
+    }
+
+    private void showDashboardPage() {
+        pageTitle.setText("Manager Dashboard");
+
+        VBox page = new VBox(15);
+        page.setPadding(new Insets(20));
+
+        Label title = new Label("Manager Overview");
+        title.setTextFill(Color.web(DARK_RED));
+        title.setStyle("-fx-font-size: 22px; -fx-font-weight: bold;");
+
+        Label stats = new Label(
+                "Current Occupancy: " + dashboard.getCurrentOccupancy() + " / " + dashboard.getMaxOccupancy()
+                        + "\nActive Alerts: " + dashboard.getActiveAlerts().size()
+        );
+        stats.setTextFill(Color.web("#6B4A3A"));
+        stats.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+
+        page.getChildren().addAll(title, stats);
+        contentPane.getChildren().setAll(page);
+    }
+
+    private void showEquipmentPage() {
+        pageTitle.setText("Equipment Usage");
+
+        VBox page = new VBox(15);
+        page.setPadding(new Insets(20));
+
+        Label title = new Label("Equipment Usage");
+        title.setTextFill(Color.web(DARK_RED));
+        title.setStyle("-fx-font-size: 22px; -fx-font-weight: bold;");
+
+        Label placeholder = new Label("Equipment usage and maintenance trends will display here.");
+        placeholder.setTextFill(Color.web("#6B4A3A"));
+        placeholder.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+
+        page.getChildren().addAll(title, placeholder);
+        contentPane.getChildren().setAll(page);
+    }
+
+    private VBox buildAlertCard(DashboardAlert alert) {
+        VBox card = new VBox(4);
+        card.setPadding(new Insets(10));
+        card.setStyle(
+                "-fx-background-color: white;" +
+                        "-fx-background-radius: 10;" +
+                        "-fx-border-radius: 10;" +
+                        "-fx-border-color: " + getAlertColor(alert) + ";" +
+                        "-fx-border-width: 2;" +
+                        "-fx-cursor: hand;"
+        );
+
+        Label title = new Label(alert.getSeverity() + ": " + alert.getTitle());
+        title.setTextFill(Color.web(getAlertColor(alert)));
+        title.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
+
+        Label details = new Label(alert.getLocation() + " • " + alert.getTime());
+        details.setTextFill(Color.web("#1B3955"));
+
+        card.getChildren().addAll(title, details);
+
+        card.setOnMouseClicked(e -> openAlertDetails(alert));
+
+        return card;
+    }
+
+    private void openAlertDetails(DashboardAlert alert) {
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Alert Details");
+
+        Label title = new Label(alert.getSeverity() + ": " + alert.getTitle());
+        title.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+        title.setTextFill(Color.web(getAlertColor(alert)));
+
+        Label location = new Label("Location: " + alert.getLocation());
+        Label time = new Label("Time: " + alert.getTime());
+        Label description = new Label(alert.getDescription());
+        description.setWrapText(true);
+
+        VBox content = new VBox(10, title, location, time, description);
+        content.setPadding(new Insets(15));
+
+        dialog.getDialogPane().setContent(content);
+
+        ButtonType resolveButton = new ButtonType("Resolve", ButtonBar.ButtonData.OK_DONE);
+        ButtonType cancelButton = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
+
+        dialog.getDialogPane().getButtonTypes().addAll(resolveButton, cancelButton);
+
+        dialog.showAndWait().ifPresent(result -> {
+            if (result == resolveButton) {
+                handleResolve(alert);
+            }
+        });
+    }
+
+    private void handleResolve(DashboardAlert alert) {
+        boolean resolved;
+
+        if (alert.getSeverity() == DashboardAlert.Severity.CRITICAL) {
+            TextInputDialog pinDialog = new TextInputDialog();
+            pinDialog.setTitle("Manager PIN Required");
+            pinDialog.setHeaderText("Critical alerts require manager override.");
+            pinDialog.setContentText("Enter manager PIN:");
+
+            resolved = pinDialog.showAndWait()
+                    .map(pin -> dashboard.resolveCriticalAlert(alert.getId(), pin))
+                    .orElse(false);
+        } else {
+            resolved = dashboard.resolveAlert(alert.getId());
+        }
+
+        Alert resultAlert = new Alert(resolved ? Alert.AlertType.INFORMATION : Alert.AlertType.ERROR);
+        resultAlert.setHeaderText(null);
+        resultAlert.setContentText(resolved ? "Alert resolved." : "Alert could not be resolved.");
+        resultAlert.showAndWait();
+
+        refreshNotifications();
+        showAlertLogsPage();
+    }
+
+    private String getAlertColor(DashboardAlert alert) {
+        return switch (alert.getSeverity()) {
+            case INFO -> "#5786BC";
+            case WARNING -> "#8A5A18";
+            case CRITICAL -> "#B3261E";
+        };
     }
 }

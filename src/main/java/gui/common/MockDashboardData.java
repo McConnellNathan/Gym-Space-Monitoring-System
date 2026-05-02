@@ -1,5 +1,6 @@
 package gui.common;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -79,5 +80,36 @@ public class MockDashboardData implements DashboardGateway{
     @Override
     public boolean resolveCriticalAlert(String alertId, String managerPin) {
         return "6789".equals(managerPin);
+    }
+
+    private final List<DashboardAlert> activeAlerts = new ArrayList<>(List.of(
+            new DashboardAlert("A003", DashboardAlert.Severity.CRITICAL,
+                    "Fall Detected", "Free Weights", "2:45 PM",
+                    "Camera detected a user down for longer than 10 seconds."),
+            new DashboardAlert("A002", DashboardAlert.Severity.WARNING,
+                    "Machine Malfunction", "Cardio Area", "2:31 PM",
+                    "Treadmill 3 reported abnormal machine behavior."),
+            new DashboardAlert("A001", DashboardAlert.Severity.INFO,
+                    "Noise Event Logged", "Free Weights", "2:15 PM",
+                    "Bulky Buzzer was triggered by excessive noise.")
+    ));
+
+    private final List<DashboardAlert> resolvedAlertLogs = new ArrayList<>();
+
+    private boolean moveAlertToLogs(String alertId) {
+        for (DashboardAlert alert : new ArrayList<>(activeAlerts)) {
+            if (alert.getId().equals(alertId)) {
+                activeAlerts.remove(alert);
+                resolvedAlertLogs.add(0, alert);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    @Override
+    public List<DashboardAlert> getResolvedAlertLogs() {
+        return resolvedAlertLogs;
     }
 }
