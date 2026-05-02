@@ -11,4 +11,8 @@ public interface DashboardGateway {
     int getMaxOccupancy();
     List<String> getClassSchedule();
     boolean registerForClass(String className);
+    List<String> getEmployeeAlerts();
+    List<DashboardAlert> getActiveAlerts();
+    boolean resolveAlert(String alertId);
+    boolean resolveCriticalAlert(String alertId, String managerPin);
 }

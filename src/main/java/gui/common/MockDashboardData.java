@@ -31,4 +31,53 @@ public class MockDashboardData implements DashboardGateway{
     public boolean registerForClass(String className) {
         return !className.toLowerCase().contains("full");
     }
+
+    @Override
+    public List<String> getEmployeeAlerts() {
+        return List.of(
+                "CRITICAL: Fall detected in Free Weights",
+                "WARNING: Treadmill 3 malfunction",
+                "INFO: Noise threshold exceeded"
+        );
+    }
+
+    @Override
+    public List<DashboardAlert> getActiveAlerts() {
+        return List.of(
+                new DashboardAlert(
+                        "A003",
+                        DashboardAlert.Severity.CRITICAL,
+                        "Fall Detected",
+                        "Free Weights",
+                        "2:45 PM",
+                        "Camera detected a user down for longer than 10 seconds."
+                ),
+                new DashboardAlert(
+                        "A002",
+                        DashboardAlert.Severity.WARNING,
+                        "Machine Malfunction",
+                        "Cardio Area",
+                        "2:31 PM",
+                        "Treadmill 3 reported abnormal machine behavior."
+                ),
+                new DashboardAlert(
+                        "A001",
+                        DashboardAlert.Severity.INFO,
+                        "Noise Event Logged",
+                        "Free Weights",
+                        "2:15 PM",
+                        "Bulky Buzzer was triggered by excessive noise."
+                )
+        );
+    }
+
+    @Override
+    public boolean resolveAlert(String alertId) {
+        return true;
+    }
+
+    @Override
+    public boolean resolveCriticalAlert(String alertId, String managerPin) {
+        return "6789".equals(managerPin);
+    }
 }

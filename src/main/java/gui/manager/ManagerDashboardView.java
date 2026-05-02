@@ -1,4 +1,4 @@
-package gui.customer;
+package gui.manager;
 
 import gui.common.DashboardGateway;
 import javafx.geometry.Insets;
@@ -9,17 +9,17 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 
-public class CustomerDashboardView {
+public class ManagerDashboardView {
 
-    private static final String BLUE = "#5786BC";
-    private static final String DARK_BLUE = "#1B3955";
+    private static final String DARK_RED = "#CE3737";
+    private static final String RED = "#70191D";
     private static final String TAN = "#F6E4CE";
 
     private final DashboardGateway dashboard;
     private final StackPane contentPane = new StackPane();
     private Label pageTitle;
 
-    public CustomerDashboardView(DashboardGateway dashboard) {
+    public ManagerDashboardView(DashboardGateway dashboard) {
         this.dashboard = dashboard;
     }
 
@@ -42,10 +42,10 @@ public class CustomerDashboardView {
         VBox sidebar = new VBox(18);
         sidebar.setPadding(new Insets(25, 15, 25, 15));
         sidebar.setPrefWidth(180);
-        sidebar.setStyle("-fx-background-color: " + BLUE + ";");
+        sidebar.setStyle("-fx-background-color: " + RED + ";");
 
         Label logo = new Label("●");
-        logo.setTextFill(Color.web(DARK_BLUE));
+        logo.setTextFill(Color.web(DARK_RED));
         logo.setStyle("-fx-font-size: 52px;");
 
         Button classesButton = navButton("▣  Classes");
@@ -84,7 +84,7 @@ public class CustomerDashboardView {
         button.setAlignment(Pos.CENTER_LEFT);
         button.setStyle(
                 "-fx-background-color: transparent;" +
-                        "-fx-text-fill: " + DARK_BLUE + ";" +
+                        "-fx-text-fill: " + DARK_RED + ";" +
                         "-fx-font-size: 15px;" +
                         "-fx-font-weight: bold;" +
                         "-fx-cursor: hand;"
@@ -93,7 +93,7 @@ public class CustomerDashboardView {
         button.setOnMouseEntered(e ->
                 button.setStyle(
                         "-fx-background-color: #dcecff;" +
-                                "-fx-text-fill: " + DARK_BLUE + ";" +
+                                "-fx-text-fill: " + DARK_RED + ";" +
                                 "-fx-font-size: 15px;" +
                                 "-fx-font-weight: bold;" +
                                 "-fx-background-radius: 4;" +
@@ -104,7 +104,7 @@ public class CustomerDashboardView {
         button.setOnMouseExited(e ->
                 button.setStyle(
                         "-fx-background-color: transparent;" +
-                                "-fx-text-fill: " + DARK_BLUE + ";" +
+                                "-fx-text-fill: " + DARK_RED + ";" +
                                 "-fx-font-size: 15px;" +
                                 "-fx-font-weight: bold;" +
                                 "-fx-cursor: hand;"
@@ -143,7 +143,7 @@ public class CustomerDashboardView {
         page.setPadding(new Insets(10));
 
         Label heading = new Label("Upcoming Classes");
-        heading.setTextFill(Color.web(DARK_BLUE));
+        heading.setTextFill(Color.web(DARK_RED));
         heading.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
 
         HBox dateRow = new HBox(14);
@@ -179,7 +179,7 @@ public class CustomerDashboardView {
         row.setStyle("-fx-border-color: transparent transparent #6B4A3A transparent;");
 
         Label classLabel = new Label(classInfo);
-        classLabel.setTextFill(Color.web(DARK_BLUE));
+        classLabel.setTextFill(Color.web(DARK_RED));
         classLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
 
         Region spacer = new Region();
@@ -187,7 +187,7 @@ public class CustomerDashboardView {
 
         Button bookButton = new Button("BOOK");
         bookButton.setStyle(
-                "-fx-background-color: " + BLUE + ";" +
+                "-fx-background-color: " + RED + ";" +
                         "-fx-text-fill: white;" +
                         "-fx-font-weight: bold;" +
                         "-fx-background-radius: 20;" +
@@ -218,7 +218,7 @@ public class CustomerDashboardView {
         int max = dashboard.getMaxOccupancy();
 
         Label occupancy = new Label(current + " / " + max);
-        occupancy.setTextFill(Color.web(DARK_BLUE));
+        occupancy.setTextFill(Color.web(DARK_RED));
         occupancy.setStyle("-fx-font-size: 54px; -fx-font-weight: bold;");
 
         ProgressBar bar = new ProgressBar((double) current / max);
@@ -239,7 +239,7 @@ public class CustomerDashboardView {
         page.setPadding(new Insets(20));
 
         Label title = new Label("Traffic Overview");
-        title.setTextFill(Color.web(DARK_BLUE));
+        title.setTextFill(Color.web(DARK_RED));
         title.setStyle("-fx-font-size: 22px; -fx-font-weight: bold;");
 
         String[] options = {"Daily", "Weekly", "Monthly", "Yearly"};
@@ -255,7 +255,7 @@ public class CustomerDashboardView {
         }
 
         Label placeholder = new Label("Traffic chart will display here.");
-        placeholder.setTextFill(Color.web(DARK_BLUE));
+        placeholder.setTextFill(Color.web(DARK_RED));
         placeholder.setStyle("-fx-font-size: 18px;");
 
         page.getChildren().addAll(title, placeholder, buttons);
