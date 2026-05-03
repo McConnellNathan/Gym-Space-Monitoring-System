@@ -10,6 +10,8 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
@@ -72,15 +74,21 @@ public class ManagerDashboardView {
         sidebar.setPrefWidth(180);
         sidebar.setStyle("-fx-background-color: " + RED + ";");
 
-        Label logo = new Label("●");
-        logo.setTextFill(Color.web(DARK_RED));
-        logo.setStyle("-fx-font-size: 52px;");
+        Image logoImage = new Image(getClass().getResource("/gymlogo.png").toExternalForm());
+        ImageView logo = new ImageView(logoImage);
 
-        Button dashboardButton = navButton("Dashboard");
-        Button equipmentButton = navButton("Equipment");
+        logo.setFitHeight(100);
+        logo.setPreserveRatio(true);
+
+        HBox logoBox = new HBox(logo);
+        logoBox.setAlignment(Pos.CENTER);
+        logoBox.setPadding(new Insets(0, 0, 5, 0));
+
+        Button dashboardButton = navButton("⌂  Dashboard");
+        Button equipmentButton = navButton("⚒  Equipment");
         Button occupancyButton = navButton("↗  Occupancy");
-        Button logsButton = navButton("Alert Logs");
         Button timesheetButton = navButton("◷  Timesheet");
+        Button logsButton = navButton("≡  Alert Logs");
 
         timesheetButton.setOnAction(e -> showTimesheetPage());
         dashboardButton.setOnAction(e -> showDashboardPage());
@@ -101,7 +109,7 @@ public class ManagerDashboardView {
         });
 
         sidebar.getChildren().addAll(
-                logo,
+                logoBox,
                 dashboardButton,
                 equipmentButton,
                 occupancyButton,
