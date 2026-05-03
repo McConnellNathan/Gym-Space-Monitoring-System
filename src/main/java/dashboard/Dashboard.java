@@ -112,7 +112,8 @@ public class Dashboard implements AutoCloseable {
                 employeeId,
                 System.currentTimeMillis()
         ));
-        return false;
+        activeAlerts.remove(alertId);
+        return true;
     }
 
     /**
