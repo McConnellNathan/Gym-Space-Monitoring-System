@@ -138,9 +138,9 @@ public class Listener implements Runnable, ReplyChannel {
     @Override
     public synchronized void send(Msg msg) throws IOException {
         try {
+            out.reset(); // prevents object reference caching surprises
             out.writeObject(msg);
             out.flush();
-            out.reset(); // prevents object reference caching surprises
         }  catch (IOException e) {
         System.err.println("Error writing to output Listener Stream ");
         throw new RuntimeException(e);
