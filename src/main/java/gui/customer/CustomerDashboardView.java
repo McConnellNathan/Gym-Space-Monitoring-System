@@ -5,6 +5,8 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
@@ -46,9 +48,15 @@ public class CustomerDashboardView {
         sidebar.setPrefWidth(180);
         sidebar.setStyle("-fx-background-color: " + BLUE + ";");
 
-        Label logo = new Label("●");
-        logo.setTextFill(Color.web(DARK_BLUE));
-        logo.setStyle("-fx-font-size: 52px;");
+        Image logoImage = new Image(getClass().getResource("/gymlogo.png").toExternalForm());
+        ImageView logo = new ImageView(logoImage);
+
+        logo.setFitHeight(100);
+        logo.setPreserveRatio(true);
+
+        HBox logoBox = new HBox(logo);
+        logoBox.setAlignment(Pos.CENTER);
+        logoBox.setPadding(new Insets(0, 0, 5, 0));
 
         Button classesButton = navButton("▣  Classes");
         Button occupancyButton = navButton("↗  Occupancy");
@@ -68,7 +76,7 @@ public class CustomerDashboardView {
         signOutButton.setOnAction(e -> onSignOut.run());
 
         sidebar.getChildren().addAll(
-                logo,
+                logoBox,
                 classesButton,
                 occupancyButton,
                 timesheetButton,
