@@ -30,7 +30,8 @@ public class Dashboard implements AutoCloseable {
     private static final int DEFAULT_MEMBERSHIP_STORE_PORT = 5001;
     private static final Scanner TERMINAL_SCANNER = new Scanner(System.in);
 
-    private final RemoteMessageClient alertManagerClient;
+    private final RemoteMessageClient alertListenerClient;
+    private final RemoteMessageClient alertCommandClient;
     private final RemoteMessageClient logStoreClient;
     private final RemoteMessageClient membershipStoreClient;
     private final Map<String, Msg.AlertNotification> activeAlerts = new ConcurrentHashMap<>();
@@ -84,10 +85,15 @@ public class Dashboard implements AutoCloseable {
             String membershipStoreHost,
             int membershipStorePort
     ) throws IOException {
-        this.alertManagerClient = new RemoteMessageClient(
+        this.alertListenerClient = new RemoteMessageClient(
                 alertManagerHost,
                 alertManagerPort,
                 new Msg.DashboardConnected()
+        );
+
+        this.alertCommandClient = new RemoteMessageClient(
+                alertManagerHost,
+                alertManagerPort
         );
         this.logStoreClient = new RemoteMessageClient(logStoreHost, logStorePort);
         this.membershipStoreClient = new RemoteMessageClient(membershipStoreHost, membershipStorePort);
@@ -98,7 +104,7 @@ public class Dashboard implements AutoCloseable {
      * Sends a one-way protocol message to the Alert Manager.
      */
     public synchronized void sendToAlertManager(Msg msg) throws IOException {
-        alertManagerClient.send(msg);
+        alertCommandClient.send(msg);
     }
 
     /**
@@ -314,7 +320,7 @@ public class Dashboard implements AutoCloseable {
             // which means this task will need coordinated access to the LogStore read socket/client too.
             while (listeningForAlerts.get()) {
                 try {
-                    Msg incoming = alertManagerClient.read();
+                    Msg incoming = alertListenerClient.read();
                     handleAlertManagerMessage(incoming);
                 } catch (IOException | ClassNotFoundException e) {
                     if (listeningForAlerts.get()) {
@@ -370,21 +376,46 @@ public class Dashboard implements AutoCloseable {
     @Override
     public void close() {
         stopAlertListener();
+
         try {
-            alertManagerClient.send(new Msg.DisconnectMsg("Dashboard disconnecting"));
+            alertListenerClient.send(new Msg.DisconnectMsg("Dashboard disconnecting"));
         } catch (IOException ignored) {
         }
+
         try {
-            alertManagerClient.close();
+            alertListenerClient.close();
         } catch (IOException ignored) {
         }
+
+        try {
+            alertCommandClient.close();
+        } catch (IOException ignored) {
+        }
+
         try {
             logStoreClient.close();
         } catch (IOException ignored) {
         }
+
         try {
             membershipStoreClient.close();
         } catch (IOException ignored) {
+        }
+    }
+
+    public synchronized boolean sendTestAlert() {
+        try {
+            sendToAlertManager(new Msg.HazardDetectionMsg(
+                    Msg.AlertType.FALL,
+                    "Free Weights",
+                    0.95,
+                    "Manual test fall alert from GUI",
+                    System.currentTimeMillis()
+            ));
+            return true;
+        } catch (IOException e) {
+            System.err.println("[Dashboard] Failed to send test alert: " + e.getMessage());
+            return false;
         }
     }
 }

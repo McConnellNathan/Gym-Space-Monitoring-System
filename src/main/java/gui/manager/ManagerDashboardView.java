@@ -3,6 +3,7 @@ package gui.manager;
 import datastore.MachineData;
 import gui.common.DashboardAlert;
 import gui.common.DashboardGateway;
+import gui.common.RealDashboardData;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.geometry.Insets;
@@ -18,6 +19,10 @@ import java.time.LocalDateTime;
 import java.time.format.TextStyle;
 import java.util.List;
 import java.util.Locale;
+import javafx.scene.chart.BarChart;
+import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.XYChart;
 
 public class ManagerDashboardView {
 
@@ -37,6 +42,8 @@ public class ManagerDashboardView {
     private Timeline alertRefreshTimer;
     private final java.time.format.DateTimeFormatter timeFormatter =
             java.time.format.DateTimeFormatter.ofPattern("MMM d, yyyy h:mm a");
+    private Label lastClockInLabel;
+    private Label lastClockOutLabel;
 
     public ManagerDashboardView(DashboardGateway dashboard, Runnable onSignOut) {
         this.dashboard = dashboard;
@@ -69,11 +76,13 @@ public class ManagerDashboardView {
         logo.setTextFill(Color.web(DARK_RED));
         logo.setStyle("-fx-font-size: 52px;");
 
-        Button dashboardButton = navButton("▣  Dashboard");
-        Button equipmentButton = navButton("▣  Equipment");
+        Button dashboardButton = navButton("Dashboard");
+        Button equipmentButton = navButton("Equipment");
         Button occupancyButton = navButton("↗  Occupancy");
-        Button logsButton = navButton("▣  Alert Logs");
+        Button logsButton = navButton("Alert Logs");
+        Button timesheetButton = navButton("◷  Timesheet");
 
+        timesheetButton.setOnAction(e -> showTimesheetPage());
         dashboardButton.setOnAction(e -> showDashboardPage());
         equipmentButton.setOnAction(e -> showEquipmentPage());
         occupancyButton.setOnAction(e -> showOccupancyPage());
@@ -96,6 +105,7 @@ public class ManagerDashboardView {
                 dashboardButton,
                 equipmentButton,
                 occupancyButton,
+                timesheetButton,
                 logsButton,
                 new Separator(),
                 spacer,
@@ -244,53 +254,143 @@ public class ManagerDashboardView {
         pageTitle.setText("Gym Occupancy");
 
         VBox page = new VBox(20);
-        page.setAlignment(Pos.CENTER);
+        page.setPadding(new Insets(20));
+        page.setAlignment(Pos.TOP_CENTER);
 
         int current = dashboard.getCurrentOccupancy();
         int max = dashboard.getMaxOccupancy();
 
         Label occupancy = new Label(current + " / " + max);
         occupancy.setTextFill(Color.web(DARK_RED));
-        occupancy.setStyle("-fx-font-size: 54px; -fx-font-weight: bold;");
-
-        ProgressBar bar = new ProgressBar((double) current / max);
-        bar.setPrefWidth(350);
+        occupancy.setStyle("-fx-font-size: 48px; -fx-font-weight: bold;");
 
         Label description = new Label("Current gym capacity");
         description.setTextFill(Color.web("#6B4A3A"));
         description.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
 
-        page.getChildren().addAll(occupancy, bar, description);
+        Button busyTimesButton = new Button("View Busy Times");
+        busyTimesButton.setStyle(
+                "-fx-background-color: " + RED + ";" +
+                        "-fx-text-fill: white;" +
+                        "-fx-font-weight: bold;" +
+                        "-fx-background-radius: 20;" +
+                        "-fx-padding: 8 22;"
+        );
+
+        VBox chartBox = new VBox(10);
+        chartBox.setAlignment(Pos.CENTER);
+        chartBox.setVisible(false);
+        chartBox.setManaged(false);
+
+        BarChart<String, Number> busyTimesChart = buildBusyTimesChart();
+
+        chartBox.getChildren().add(busyTimesChart);
+
+        busyTimesButton.setOnAction(e -> {
+            boolean showing = chartBox.isVisible();
+
+            chartBox.setVisible(!showing);
+            chartBox.setManaged(!showing);
+
+            busyTimesButton.setText(showing ? "View Busy Times" : "Hide Busy Times");
+        });
+
+        page.getChildren().addAll(
+                occupancy,
+                description,
+                busyTimesButton,
+                chartBox
+        );
+
         contentPane.getChildren().setAll(page);
     }
 
+    // HARDCODED FIX IT FIX IT FIX IT
+    private BarChart<String, Number> buildBusyTimesChart() {
+        CategoryAxis xAxis = new CategoryAxis();
+        xAxis.setLabel("Time of Day");
+
+        NumberAxis yAxis = new NumberAxis();
+        yAxis.setLabel("Average Occupancy");
+
+        BarChart<String, Number> chart = new BarChart<>(xAxis, yAxis);
+        chart.setTitle("Average Gym Busy Times");
+        chart.setLegendVisible(false);
+        chart.setPrefHeight(350);
+        chart.setPrefWidth(600);
+
+        XYChart.Series<String, Number> series = new XYChart.Series<>();
+
+        series.getData().add(new XYChart.Data<>("6 AM", 18));
+        series.getData().add(new XYChart.Data<>("8 AM", 35));
+        series.getData().add(new XYChart.Data<>("10 AM", 22));
+        series.getData().add(new XYChart.Data<>("12 PM", 48));
+        series.getData().add(new XYChart.Data<>("2 PM", 30));
+        series.getData().add(new XYChart.Data<>("5 PM", 75));
+        series.getData().add(new XYChart.Data<>("7 PM", 68));
+        series.getData().add(new XYChart.Data<>("9 PM", 40));
+
+        chart.getData().add(series);
+
+        return chart;
+    }
+
     private void showTimesheetPage() {
-        pageTitle.setText("Daily Timesheet");
+        pageTitle.setText("Manager Timesheet");
 
         VBox page = new VBox(20);
         page.setPadding(new Insets(20));
+        page.setAlignment(Pos.TOP_LEFT);
 
-        Label title = new Label("Traffic Overview");
+        Label title = new Label("Clock In / Clock Out");
         title.setTextFill(Color.web(DARK_RED));
         title.setStyle("-fx-font-size: 22px; -fx-font-weight: bold;");
 
-        String[] options = {"Daily", "Weekly", "Monthly", "Yearly"};
-        ToggleGroup group = new ToggleGroup();
+        Button clockInButton = new Button("Clock In");
+        Button clockOutButton = new Button("Clock Out");
 
-        VBox buttons = new VBox(15);
-        for (String option : options) {
-            RadioButton radio = new RadioButton(option);
-            radio.setToggleGroup(group);
-            radio.setTextFill(Color.web("#6B4A3A"));
-            radio.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
-            buttons.getChildren().add(radio);
-        }
+        clockInButton.setStyle(
+                "-fx-background-color: " + DARK_RED + ";" +
+                        "-fx-text-fill: white;" +
+                        "-fx-font-weight: bold;" +
+                        "-fx-background-radius: 20;" +
+                        "-fx-padding: 8 22;"
+        );
 
-        Label placeholder = new Label("Traffic chart will display here.");
-        placeholder.setTextFill(Color.web(DARK_RED));
-        placeholder.setStyle("-fx-font-size: 18px;");
+        clockOutButton.setStyle(
+                "-fx-background-color: " + RED + ";" +
+                        "-fx-text-fill: white;" +
+                        "-fx-font-weight: bold;" +
+                        "-fx-background-radius: 20;" +
+                        "-fx-padding: 8 22;"
+        );
 
-        page.getChildren().addAll(title, placeholder, buttons);
+        HBox buttonRow = new HBox(15, clockInButton, clockOutButton);
+        buttonRow.setAlignment(Pos.CENTER_LEFT);
+
+        lastClockInLabel = new Label("Last clock in: --");
+        lastClockOutLabel = new Label("Last clock out: --");
+
+        lastClockInLabel.setTextFill(Color.web("#6B4A3A"));
+        lastClockOutLabel.setTextFill(Color.web("#6B4A3A"));
+
+        lastClockInLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
+        lastClockOutLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
+
+        clockInButton.setOnAction(e -> {
+            String time = LocalDateTime.now().format(timeFormatter);
+            lastClockInLabel.setText("Last clock in: " + time);
+        });
+
+        clockOutButton.setOnAction(e -> {
+            String time = LocalDateTime.now().format(timeFormatter);
+            lastClockOutLabel.setText("Last clock out: " + time);
+        });
+
+        VBox timeInfoBox = new VBox(8, lastClockInLabel, lastClockOutLabel);
+        timeInfoBox.setPadding(new Insets(15, 0, 0, 0));
+
+        page.getChildren().addAll(title, buttonRow, timeInfoBox);
         contentPane.getChildren().setAll(page);
     }
 
@@ -314,7 +414,18 @@ public class ManagerDashboardView {
         Button refreshButton = new Button("Refresh");
         refreshButton.setOnAction(e -> refreshNotifications());
 
-        HBox header = new HBox(10, title, refreshButton, notificationToggleButton);
+        Button testAlertButton = new Button("Test Alert");
+        testAlertButton.setOnAction(e -> {
+            new Thread(() -> {
+                if (dashboard instanceof RealDashboardData realDashboard) {
+                    realDashboard.sendTestAlert();
+                }
+
+                javafx.application.Platform.runLater(this::refreshNotifications);
+            }).start();
+        });
+
+        HBox header = new HBox(10, title, refreshButton, testAlertButton, notificationToggleButton);
         header.setAlignment(Pos.CENTER_LEFT);
 
         notificationList = new VBox(8);

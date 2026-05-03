@@ -121,7 +121,13 @@ public class RealDashboardData implements DashboardGateway, AutoCloseable {
             if (alert == null) {
                 return false;
             }
-            return dashboard.acknowledgeAlert(alert);
+
+            Employee current = dashboard.getCurrentEmployee();
+            if (current == null) {
+                return false;
+            }
+
+            return dashboard.acknowledgeAlert(alertId, current.employeeId());
         } catch (Exception e) {
             System.err.println("[RealDashboardData] Failed to resolve alert: " + e.getMessage());
             return false;
@@ -140,9 +146,14 @@ public class RealDashboardData implements DashboardGateway, AutoCloseable {
                 return false;
             }
 
-            return dashboard.acknowledgeAlert(alertId, "manager-demo");
+            Employee current = dashboard.getCurrentEmployee();
+            if (current == null) {
+                return false;
+            }
+
+            return dashboard.acknowledgeAlert(alertId, current.employeeId());
         } catch (Exception e) {
-            System.err.println("Failed to resolve critical alert: " + e.getMessage());
+            System.err.println("[RealDashboardData] Failed to resolve critical alert: " + e.getMessage());
             return false;
         }
     }
@@ -151,13 +162,18 @@ public class RealDashboardData implements DashboardGateway, AutoCloseable {
     public List<DashboardAlert> getResolvedAlertLogs() {
         try {
             Msg response = dashboard.requestFromLogStore(
-                    new Msg.LogReadRequestMsg("resolved-query", "ALERT", 0, System.currentTimeMillis())
+                    new Msg.LogReadRequestMsg("resolved-query", "ALL", 0, System.currentTimeMillis())
             );
+
             if (response instanceof Msg.LogReadResponseMsg r && r.success() && r.records() != null) {
                 return Arrays.stream(r.records())
+                        .filter(record -> record.logType() != null)
+                        .filter(record -> record.logType().contains("ALERT_RESOLVED"))
+                        .sorted(Comparator.comparingLong(Msg.LogRecord::timestampEpochMillis).reversed())
                         .map(this::logRecordToDashboardAlert)
                         .toList();
             }
+
             return List.of();
         } catch (Exception e) {
             System.err.println("[RealDashboardData] Failed to get resolved alert logs: " + e.getMessage());
@@ -213,5 +229,9 @@ public class RealDashboardData implements DashboardGateway, AutoCloseable {
     @Override
     public void close() {
         dashboard.close();
+    }
+
+    public boolean sendTestAlert() {
+        return dashboard.sendTestAlert();
     }
 }
