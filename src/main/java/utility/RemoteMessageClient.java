@@ -47,9 +47,9 @@ public class RemoteMessageClient implements Closeable {
     }
 
     public synchronized void send(Msg msg) throws IOException {
+        out.reset();
         out.writeObject(msg);
         out.flush();
-        out.reset();
     }
 
 //    Todo probably want to reconsider this reading capablilites perhaps making it a thread that is listting on the inpurt
