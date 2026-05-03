@@ -1,5 +1,6 @@
 package gui.common;
 
+import datastore.Employee;
 import java.util.ArrayList;
 import java.util.List;
 

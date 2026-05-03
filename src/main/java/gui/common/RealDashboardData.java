@@ -1,14 +1,17 @@
 package gui.common;
 
 import dashboard.Dashboard;
-import protocol.Msg;
+import datastore.Employee;
 import datastore.MachineData;
+import protocol.Msg;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -23,13 +26,28 @@ public class RealDashboardData implements DashboardGateway, AutoCloseable {
     }
 
     @Override
+    public Employee.EmployeeStatus signIn(String username, String password) {
+        try {
+            return dashboard.signIn(username, password);
+        } catch (Exception e) {
+            System.err.println("[RealDashboardData] Sign-in failed: " + e.getMessage());
+            return null;
+        }
+    }
+
+    @Override
     public int getCurrentOccupancy() {
         try {
-            Msg.MemberEnterRecord[] records = dashboard.requestMemberUsageData();
-            if (records == null) {
-                return 0;
+            Msg response = dashboard.requestFromLogStore(new Msg.RequestMemberData());
+            if (response instanceof Msg.MemberDataResponseMsg r && r.success() && r.memberData() != null) {
+                LocalDate today = LocalDate.now();
+                return (int) Arrays.stream(r.memberData())
+                        .filter(e -> e.month() == today.getMonthValue()
+                                && e.day() == today.getDayOfMonth()
+                                && e.year() == today.getYear())
+                        .count();
             }
-            return records.length;
+            return 0;
         } catch (Exception e) {
             System.err.println("Failed to get current occupancy: " + e.getMessage());
             return 0;
@@ -102,7 +120,6 @@ public class RealDashboardData implements DashboardGateway, AutoCloseable {
                 return false;
             }
 
-            // Temporary fallback until GUI-side manager auth is wired properly.
             if (!"6789".equals(managerPin)) {
                 return false;
             }
@@ -116,7 +133,31 @@ public class RealDashboardData implements DashboardGateway, AutoCloseable {
 
     @Override
     public List<DashboardAlert> getResolvedAlertLogs() {
-        return List.of();
+        try {
+            Msg response = dashboard.requestFromLogStore(
+                    new Msg.LogReadRequestMsg("resolved-query", "ALERT", 0, System.currentTimeMillis())
+            );
+            if (response instanceof Msg.LogReadResponseMsg r && r.success() && r.records() != null) {
+                return Arrays.stream(r.records())
+                        .map(this::logRecordToDashboardAlert)
+                        .toList();
+            }
+            return List.of();
+        } catch (Exception e) {
+            System.err.println("[RealDashboardData] Failed to get resolved alert logs: " + e.getMessage());
+            return List.of();
+        }
+    }
+
+    private DashboardAlert logRecordToDashboardAlert(Msg.LogRecord record) {
+        return new DashboardAlert(
+                record.logId(),
+                DashboardAlert.Severity.INFO,
+                record.logType(),
+                record.source(),
+                timeFormatter.format(Instant.ofEpochMilli(record.timestampEpochMillis())),
+                record.description()
+        );
     }
 
     private DashboardAlert toDashboardAlert(Msg.AlertNotification alert) {

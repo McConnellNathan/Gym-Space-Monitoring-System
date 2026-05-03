@@ -19,6 +19,7 @@ public class DemoLauncher {
         AlertManager alertManager = null;
         Process scannerProcess = null;
         Process aiDashboardProcess = null;
+        Process guiProcess = null;
 
         try {
             System.out.println("Creating LogStore...");
@@ -62,8 +63,14 @@ public class DemoLauncher {
             System.out.println("Launching DemoAiDashboard...");
             aiDashboardProcess = launchJavaProcess("app.DemoAiDashboard");
 
+            Thread.sleep(500);
+
+            System.out.println("Launching MainGuiApp...");
+            guiProcess = launchJavaProcess("gui.MainGuiApp");
+
             Process finalScannerProcess = scannerProcess;
             Process finalAiDashboardProcess = aiDashboardProcess;
+            Process finalGuiProcess = guiProcess;
             LogStore finalLogStore = logStore;
             MembershipStore finalMembershipStore = membershipStore;
             AlertManager finalAlertManager = alertManager;
@@ -73,6 +80,7 @@ public class DemoLauncher {
 
                 stopProcess(finalScannerProcess, "DoorScannerDemo");
                 stopProcess(finalAiDashboardProcess, "DemoAiDashboard");
+                stopProcess(finalGuiProcess, "MainGuiApp");
 
                 try {
                     finalAlertManager.stopRunning();
@@ -99,6 +107,7 @@ public class DemoLauncher {
 
             stopProcess(scannerProcess, "DoorScannerDemo");
             stopProcess(aiDashboardProcess, "DemoAiDashboard");
+            stopProcess(guiProcess, "MainGuiApp");
 
             if (alertManager != null) {
                 try {
