@@ -1,6 +1,7 @@
 package gui.common;
 
 import datastore.Employee;
+import datastore.MachineData;
 import java.util.List;
 
 /**
@@ -9,6 +10,8 @@ import java.util.List;
 
 public interface DashboardGateway {
     default Employee.EmployeeStatus signIn(String username, String password) { return null; }
+    default String getCurrentEmployeeName() { return ""; }
+    default MachineData[] getMachineData() { return null; }
     int getCurrentOccupancy();
     int getMaxOccupancy();
     List<String> getClassSchedule();

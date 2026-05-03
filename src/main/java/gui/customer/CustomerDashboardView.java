@@ -16,11 +16,13 @@ public class CustomerDashboardView {
     private static final String TAN = "#F6E4CE";
 
     private final DashboardGateway dashboard;
+    private final Runnable onSignOut;
     private final StackPane contentPane = new StackPane();
     private Label pageTitle;
 
-    public CustomerDashboardView(DashboardGateway dashboard) {
+    public CustomerDashboardView(DashboardGateway dashboard, Runnable onSignOut) {
         this.dashboard = dashboard;
+        this.onSignOut = onSignOut;
     }
 
     public Parent build() {
@@ -62,6 +64,8 @@ public class CustomerDashboardView {
         Button settingsButton = navButton("⚙  Settings");
         Button supportButton = navButton("?  Support");
         Button signOutButton = navButton("⏻  Sign Out");
+
+        signOutButton.setOnAction(e -> onSignOut.run());
 
         sidebar.getChildren().addAll(
                 logo,

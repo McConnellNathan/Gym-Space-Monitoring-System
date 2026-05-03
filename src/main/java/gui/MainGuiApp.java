@@ -23,7 +23,7 @@ public class MainGuiApp extends Application {
 
         LoginView loginView = new LoginView(dashboard, primaryStage);
         primaryStage.setTitle("GSMS - Sign In");
-        primaryStage.setScene(new Scene(loginView.getContent(), 600, 450));
+        primaryStage.setScene(new Scene(loginView.getContent(), 800, 600));
         primaryStage.show();
     }
 

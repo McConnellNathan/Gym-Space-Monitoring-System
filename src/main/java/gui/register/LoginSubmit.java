@@ -9,15 +9,26 @@ public class LoginSubmit {
     private final Button button = new Button("Sign In");
 
     public Node getContent() {
-        button.setStyle(
+        String normal =
             "-fx-background-color: #F6E4CE;" +
             "-fx-text-fill: #1b3955;" +
             "-fx-font-weight: bold;" +
             "-fx-padding: 8 30;" +
             "-fx-cursor: hand;" +
-            "-fx-font-size: 14;"
-        );
+            "-fx-font-size: 14;";
+
+        String hovered =
+            "-fx-background-color: #ddc9b0;" +
+            "-fx-text-fill: #1b3955;" +
+            "-fx-font-weight: bold;" +
+            "-fx-padding: 8 30;" +
+            "-fx-cursor: hand;" +
+            "-fx-font-size: 14;";
+
+        button.setStyle(normal);
         button.setMinWidth(120);
+        button.setOnMouseEntered(e -> button.setStyle(hovered));
+        button.setOnMouseExited(e -> button.setStyle(normal));
 
         VBox box = new VBox(button);
         box.setAlignment(Pos.CENTER);

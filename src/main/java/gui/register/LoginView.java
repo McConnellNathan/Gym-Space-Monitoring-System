@@ -62,25 +62,29 @@ public class LoginView {
 
         VBox card = new VBox(24);
         card.setAlignment(Pos.CENTER);
-        card.setPadding(new Insets(40));
-        card.setMaxWidth(340);
+        card.setPadding(new Insets(15, 40, 40, 40));
         card.setBackground(new Background(new BackgroundFill(Color.web(DARK_BLUE), new CornerRadii(12), Insets.EMPTY)));
         card.getChildren().addAll(title.getContent(), inputs.getContent(), submit.getContent(), errorLabel);
 
         content = new StackPane(card);
         content.setBackground(new Background(new BackgroundFill(Color.web(TAN), CornerRadii.EMPTY, Insets.EMPTY)));
+        card.maxWidthProperty().bind(content.widthProperty().multiply(0.45));
     }
 
     private void openDashboard(Employee.EmployeeStatus status) {
+        Runnable onSignOut = () -> {
+            LoginView fresh = new LoginView(dashboard, stage);
+            stage.setScene(new Scene(fresh.getContent(), 800, 600));
+            stage.setTitle("GSMS - Sign In");
+        };
+
         switch (status) {
             case MANAGER -> {
-                ManagerDashboardView view = new ManagerDashboardView(dashboard);
-                stage.setScene(new Scene(view.build(), 1000, 650));
+                stage.setScene(new Scene(new ManagerDashboardView(dashboard, onSignOut).build(), 1000, 650));
                 stage.setTitle("Manager Dashboard");
             }
             case EMPLOYEE -> {
-                EmployeeDashboardView view = new EmployeeDashboardView(dashboard);
-                stage.setScene(new Scene(view.build(), 900, 600));
+                stage.setScene(new Scene(new EmployeeDashboardView(dashboard, onSignOut).build(), 900, 600));
                 stage.setTitle("Employee Dashboard");
             }
         }

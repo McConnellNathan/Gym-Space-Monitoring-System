@@ -26,6 +26,22 @@ public class RealDashboardData implements DashboardGateway, AutoCloseable {
     }
 
     @Override
+    public String getCurrentEmployeeName() {
+        Employee e = dashboard.getCurrentEmployee();
+        return e != null ? e.employeeName() : "";
+    }
+
+    @Override
+    public MachineData[] getMachineData() {
+        try {
+            return dashboard.requestMachineUsageData();
+        } catch (Exception e) {
+            System.err.println("[RealDashboardData] Failed to get machine data: " + e.getMessage());
+            return null;
+        }
+    }
+
+    @Override
     public Employee.EmployeeStatus signIn(String username, String password) {
         try {
             return dashboard.signIn(username, password);

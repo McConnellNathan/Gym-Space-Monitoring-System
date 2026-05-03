@@ -8,9 +8,13 @@ import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.TextStyle;
 import java.util.List;
+import java.util.Locale;
 import javafx.animation.Timeline;
 import javafx.animation.KeyFrame;
 import javafx.util.Duration;
@@ -27,8 +31,10 @@ public class EmployeeDashboardView {
     private static final String TAN = "#F6E4CE";
 
     private final DashboardGateway dashboard;
+    private final Runnable onSignOut;
     private final StackPane contentPane = new StackPane();
     private Label pageTitle;
+    private Timeline alertRefreshTimer;
     private final DateTimeFormatter timeFormatter =
             DateTimeFormatter.ofPattern("MMM d, yyyy h:mm a");
     private Label lastClockInLabel;
@@ -39,8 +45,9 @@ public class EmployeeDashboardView {
     private Button notificationToggleButton;
     private boolean notificationsCollapsed = false;
 
-    public EmployeeDashboardView(DashboardGateway dashboard) {
+    public EmployeeDashboardView(DashboardGateway dashboard, Runnable onSignOut) {
         this.dashboard = dashboard;
+        this.onSignOut = onSignOut;
     }
 
     public Parent build() {
@@ -83,6 +90,11 @@ public class EmployeeDashboardView {
         Button settingsButton = navButton("⚙  Settings");
         Button supportButton = navButton("?  Support");
         Button signOutButton = navButton("⏻  Sign Out");
+
+        signOutButton.setOnAction(e -> {
+            if (alertRefreshTimer != null) alertRefreshTimer.stop();
+            onSignOut.run();
+        });
 
         sidebar.getChildren().addAll(
                 logo,
@@ -158,7 +170,8 @@ public class EmployeeDashboardView {
     }
 
     private void showClassesPage() {
-        pageTitle.setText("Hello, Employee");
+        String name = dashboard.getCurrentEmployeeName();
+        pageTitle.setText(name.isEmpty() ? "Hello, Employee" : "Hello, " + name);
 
         VBox page = new VBox(18);
         page.setPadding(new Insets(10));
@@ -170,9 +183,11 @@ public class EmployeeDashboardView {
         HBox dateRow = new HBox(14);
         dateRow.setAlignment(Pos.CENTER_LEFT);
 
-        String[] dates = {"19\nSun", "20\nMon", "21\nTue", "22\nWed", "23\nThu", "24\nFri", "25\nSat"};
-        for (String date : dates) {
-            Label dateBox = new Label(date);
+        LocalDate startOfWeek = LocalDate.now().with(DayOfWeek.SUNDAY);
+        for (int i = 0; i < 7; i++) {
+            LocalDate day = startOfWeek.plusDays(i);
+            String dateStr = day.getDayOfMonth() + "\n" + day.getDayOfWeek().getDisplayName(TextStyle.SHORT, Locale.ENGLISH);
+            Label dateBox = new Label(dateStr);
             dateBox.setAlignment(Pos.CENTER);
             dateBox.setPrefSize(55, 55);
             dateBox.setStyle(
@@ -323,6 +338,10 @@ public class EmployeeDashboardView {
         notificationPanel.getChildren().addAll(header, notificationList);
 
         refreshNotifications();
+
+        alertRefreshTimer = new Timeline(new KeyFrame(Duration.seconds(5), e -> refreshNotifications()));
+        alertRefreshTimer.setCycleCount(Timeline.INDEFINITE);
+        alertRefreshTimer.play();
 
         return notificationPanel;
     }

@@ -1,15 +1,23 @@
 package gui.manager;
 
+import datastore.MachineData;
 import gui.common.DashboardAlert;
 import gui.common.DashboardGateway;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.util.Duration;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.TextStyle;
 import java.util.List;
+import java.util.Locale;
 
 public class ManagerDashboardView {
 
@@ -18,6 +26,7 @@ public class ManagerDashboardView {
     private static final String TAN = "#F6E4CE";
 
     private final DashboardGateway dashboard;
+    private final Runnable onSignOut;
     private final StackPane contentPane = new StackPane();
     private Label pageTitle;
     private VBox notificationPanel;
@@ -25,11 +34,13 @@ public class ManagerDashboardView {
     private Button notificationToggleButton;
     private boolean notificationsCollapsed = false;
     private int lastAlertCount = 0;
+    private Timeline alertRefreshTimer;
     private final java.time.format.DateTimeFormatter timeFormatter =
             java.time.format.DateTimeFormatter.ofPattern("MMM d, yyyy h:mm a");
 
-    public ManagerDashboardView(DashboardGateway dashboard) {
+    public ManagerDashboardView(DashboardGateway dashboard, Runnable onSignOut) {
         this.dashboard = dashboard;
+        this.onSignOut = onSignOut;
     }
 
     public Parent build() {
@@ -74,6 +85,11 @@ public class ManagerDashboardView {
         Button settingsButton = navButton("⚙  Settings");
         Button supportButton = navButton("?  Support");
         Button signOutButton = navButton("⏻  Sign Out");
+
+        signOutButton.setOnAction(e -> {
+            if (alertRefreshTimer != null) alertRefreshTimer.stop();
+            onSignOut.run();
+        });
 
         sidebar.getChildren().addAll(
                 logo,
@@ -150,7 +166,8 @@ public class ManagerDashboardView {
     }
 
     private void showClassesPage() {
-        pageTitle.setText("Hello, Manager");
+        String name = dashboard.getCurrentEmployeeName();
+        pageTitle.setText(name.isEmpty() ? "Hello, Manager" : "Hello, " + name);
 
         VBox page = new VBox(18);
         page.setPadding(new Insets(10));
@@ -162,9 +179,11 @@ public class ManagerDashboardView {
         HBox dateRow = new HBox(14);
         dateRow.setAlignment(Pos.CENTER_LEFT);
 
-        String[] dates = {"19\nSun", "20\nMon", "21\nTue", "22\nWed", "23\nThu", "24\nFri", "25\nSat"};
-        for (String date : dates) {
-            Label dateBox = new Label(date);
+        LocalDate startOfWeek = LocalDate.now().with(DayOfWeek.SUNDAY);
+        for (int i = 0; i < 7; i++) {
+            LocalDate day = startOfWeek.plusDays(i);
+            String dateStr = day.getDayOfMonth() + "\n" + day.getDayOfWeek().getDisplayName(TextStyle.SHORT, Locale.ENGLISH);
+            Label dateBox = new Label(dateStr);
             dateBox.setAlignment(Pos.CENTER);
             dateBox.setPrefSize(55, 55);
             dateBox.setStyle(
@@ -304,6 +323,10 @@ public class ManagerDashboardView {
 
         refreshNotifications();
 
+        alertRefreshTimer = new Timeline(new KeyFrame(Duration.seconds(5), e -> refreshNotifications()));
+        alertRefreshTimer.setCycleCount(Timeline.INDEFINITE);
+        alertRefreshTimer.play();
+
         return notificationPanel;
     }
 
@@ -402,7 +425,8 @@ public class ManagerDashboardView {
     }
 
     private void showDashboardPage() {
-        pageTitle.setText("Manager Dashboard");
+        String name = dashboard.getCurrentEmployeeName();
+        pageTitle.setText(name.isEmpty() ? "Manager Dashboard" : "Hello, " + name);
 
         VBox page = new VBox(15);
         page.setPadding(new Insets(20));
@@ -432,11 +456,23 @@ public class ManagerDashboardView {
         title.setTextFill(Color.web(DARK_RED));
         title.setStyle("-fx-font-size: 22px; -fx-font-weight: bold;");
 
-        Label placeholder = new Label("Equipment usage and maintenance trends will display here.");
-        placeholder.setTextFill(Color.web("#6B4A3A"));
-        placeholder.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+        page.getChildren().add(title);
 
-        page.getChildren().addAll(title, placeholder);
+        MachineData[] machines = dashboard.getMachineData();
+        if (machines == null || machines.length == 0) {
+            Label placeholder = new Label("Equipment usage and maintenance trends will display here.");
+            placeholder.setTextFill(Color.web("#6B4A3A"));
+            placeholder.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+            page.getChildren().add(placeholder);
+        } else {
+            for (MachineData m : machines) {
+                Label row = new Label(m.machineType() + ": " + m.usageCount() + " uses");
+                row.setTextFill(Color.web("#6B4A3A"));
+                row.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+                page.getChildren().add(row);
+            }
+        }
+
         contentPane.getChildren().setAll(page);
     }
 

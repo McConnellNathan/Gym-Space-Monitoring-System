@@ -12,13 +12,14 @@ public class LoginInputs {
 
     public Node getContent() {
         usernameField.setPromptText("Username");
-        usernameField.setMaxWidth(250);
+        usernameField.setMaxWidth(Double.MAX_VALUE);
 
         passwordField.setPromptText("Password");
-        passwordField.setMaxWidth(250);
+        passwordField.setMaxWidth(Double.MAX_VALUE);
 
         VBox box = new VBox(10, usernameField, passwordField);
         box.setAlignment(Pos.CENTER);
+        box.setMaxWidth(Double.MAX_VALUE);
         return box;
     }
 
