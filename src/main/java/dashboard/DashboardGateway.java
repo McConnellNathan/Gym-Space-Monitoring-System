@@ -1,7 +1,9 @@
-package gui.common;
+package dashboard;
 
 import datastore.Employee;
 import datastore.MachineData;
+import gui.common.DashboardAlert;
+
 import java.util.List;
 
 /**

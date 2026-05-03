@@ -1,7 +1,7 @@
 package gui.register;
 
 import datastore.Employee;
-import gui.common.DashboardGateway;
+import dashboard.DashboardGateway;
 import gui.employee.EmployeeDashboardView;
 import gui.manager.ManagerDashboardView;
 import javafx.geometry.Insets;

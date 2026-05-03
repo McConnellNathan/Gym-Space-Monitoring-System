@@ -1,7 +1,7 @@
 package gui.employee;
 
 import gui.common.DashboardAlert;
-import gui.common.DashboardGateway;
+import dashboard.DashboardGateway;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;

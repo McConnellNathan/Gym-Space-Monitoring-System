@@ -1,8 +1,8 @@
 package gui;
 
-import gui.common.DashboardGateway;
-import gui.common.MockDashboardData;
-import gui.common.RealDashboardData;
+import dashboard.DashboardGateway;
+import dashboard.MockDashboardData;
+import dashboard.RealDashboardData;
 import gui.customer.CustomerDashboardView;
 import gui.employee.EmployeeDashboardView;
 import gui.register.LoginView;

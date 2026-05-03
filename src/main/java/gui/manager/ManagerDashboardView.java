@@ -2,8 +2,8 @@ package gui.manager;
 
 import datastore.MachineData;
 import gui.common.DashboardAlert;
-import gui.common.DashboardGateway;
-import gui.common.RealDashboardData;
+import dashboard.DashboardGateway;
+import dashboard.RealDashboardData;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.geometry.Insets;

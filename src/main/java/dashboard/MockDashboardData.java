@@ -1,6 +1,7 @@
-package gui.common;
+package dashboard;
 
-import datastore.Employee;
+import gui.common.DashboardAlert;
+
 import java.util.ArrayList;
 import java.util.List;
 

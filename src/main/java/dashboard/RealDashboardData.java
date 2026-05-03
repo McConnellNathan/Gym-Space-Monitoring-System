@@ -1,8 +1,8 @@
-package gui.common;
+package dashboard;
 
-import dashboard.Dashboard;
 import datastore.Employee;
 import datastore.MachineData;
+import gui.common.DashboardAlert;
 import protocol.Msg;
 
 import java.io.IOException;
