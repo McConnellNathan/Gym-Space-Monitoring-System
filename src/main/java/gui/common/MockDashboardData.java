@@ -82,6 +82,7 @@ public class MockDashboardData implements DashboardGateway{
         return "6789".equals(managerPin);
     }
 
+
     private final List<DashboardAlert> activeAlerts = new ArrayList<>(List.of(
             new DashboardAlert("A003", DashboardAlert.Severity.CRITICAL,
                     "Fall Detected", "Free Weights", "2:45 PM",

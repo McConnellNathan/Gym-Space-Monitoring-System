@@ -1,7 +1,7 @@
 package protocol;
 
-import DataStore.Employee;
-import DataStore.MachineData;
+import datastore.Employee;
+import datastore.MachineData;
 
 import java.io.Serializable;
 

@@ -1,7 +1,7 @@
-package Dashboard;
+package dashboard;
 
-import DataStore.Employee;
-import DataStore.MachineData;
+import datastore.Employee;
+import datastore.MachineData;
 import protocol.Msg;
 import utility.RemoteMessageClient;
 
@@ -103,13 +103,16 @@ public class Dashboard implements AutoCloseable {
 
     /**
      * Sends a direct alert acknowledgement with a known employee id.
+     *
+     * @return
      */
-    public synchronized void acknowledgeAlert(String alertId, String employeeId) throws IOException {
+    public synchronized boolean acknowledgeAlert(String alertId, String employeeId) throws IOException {
         sendToAlertManager(new Msg.AlertAcknowledgementMsg(
                 alertId,
                 employeeId,
                 System.currentTimeMillis()
         ));
+        return false;
     }
 
     /**

@@ -2,6 +2,7 @@ package app;
 
 import alertmanager.AlertManager;
 import datastore.LogStore;
+import datastore.MembershipStore;
 
 import java.io.File;
 import java.io.IOException;
@@ -10,9 +11,11 @@ public class DemoLauncher {
     private static final String HOST = "localhost";
     private static final int LOG_STORE_PORT = 5000;
     private static final int ALERT_MANAGER_PORT = 6000;
+    private static final int MEMBERSHIP_STORE_PORT = 5001;
 
     public static void main(String[] args) throws InterruptedException {
         LogStore logStore = null;
+        MembershipStore membershipStore = null;
         AlertManager alertManager = null;
         Process scannerProcess = null;
         Process aiDashboardProcess = null;
@@ -23,6 +26,14 @@ public class DemoLauncher {
 
             System.out.println("Starting LogStore...");
             logStore.start();
+
+            Thread.sleep(250);
+
+            System.out.println("Creating MembershipStore...");
+            membershipStore = new MembershipStore(HOST, MEMBERSHIP_STORE_PORT);
+
+            System.out.println("Starting MembershipStore...");
+            membershipStore.start();
 
             Thread.sleep(250);
 
@@ -40,6 +51,7 @@ public class DemoLauncher {
             Thread.sleep(500);
 
             System.out.printf("LogStore started on %s:%d%n", HOST, LOG_STORE_PORT);
+            System.out.printf("MembershipStore started on %s:%d%n", HOST, MEMBERSHIP_STORE_PORT);
             System.out.printf("AlertManager started on %s:%d%n", HOST, ALERT_MANAGER_PORT);
 
             System.out.println("Launching DoorScannerDemo...");
@@ -53,6 +65,7 @@ public class DemoLauncher {
             Process finalScannerProcess = scannerProcess;
             Process finalAiDashboardProcess = aiDashboardProcess;
             LogStore finalLogStore = logStore;
+            MembershipStore finalMembershipStore = membershipStore;
             AlertManager finalAlertManager = alertManager;
 
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -63,6 +76,11 @@ public class DemoLauncher {
 
                 try {
                     finalAlertManager.stopRunning();
+                } catch (Exception ignored) {
+                }
+
+                try {
+                    finalMembershipStore.stopRunning();
                 } catch (Exception ignored) {
                 }
 
@@ -85,6 +103,12 @@ public class DemoLauncher {
             if (alertManager != null) {
                 try {
                     alertManager.stopRunning();
+                } catch (Exception ignored) {
+                }
+            }
+            if (membershipStore != null) {
+                try {
+                    membershipStore.stopRunning();
                 } catch (Exception ignored) {
                 }
             }

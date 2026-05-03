@@ -1,6 +1,8 @@
 package gui;
 
+import gui.common.DashboardGateway;
 import gui.common.MockDashboardData;
+import gui.common.RealDashboardData;
 import gui.customer.CustomerDashboardView;
 import gui.employee.EmployeeDashboardView;
 import gui.manager.ManagerDashboardView;
@@ -12,10 +14,19 @@ import javafx.stage.Stage;
 
 public class MainGuiApp extends Application {
 
-    private final MockDashboardData dashboard = new MockDashboardData();
+    //private final MockDashboardData dashboard = new MockDashboardData();
+    private DashboardGateway dashboard;
 
     @Override
     public void start(Stage primaryStage) {
+        try {
+            dashboard = new RealDashboardData();
+            System.out.println("Connected to real backend dashboard data.");
+        } catch (Exception e) {
+            System.err.println("Falling back to mock dashboard data: " + e.getMessage());
+            dashboard = new MockDashboardData();
+        }
+
         Button customerButton = new Button("Open Customer Dashboard");
         Button employeeButton = new Button("Open Employee Dashboard");
         Button managerButton = new Button("Open Manager Dashboard");
