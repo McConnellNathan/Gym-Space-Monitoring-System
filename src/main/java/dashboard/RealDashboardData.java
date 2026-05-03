@@ -142,7 +142,7 @@ public class RealDashboardData implements DashboardGateway, AutoCloseable {
                 return false;
             }
 
-            if (!"6789".equals(managerPin)) {
+            if (!"1234".equals(managerPin)) {
                 return false;
             }
 
