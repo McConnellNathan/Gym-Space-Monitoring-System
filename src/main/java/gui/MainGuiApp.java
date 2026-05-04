@@ -3,6 +3,8 @@ package gui;
 import gui.common.DashboardGateway;
 import gui.common.MockDashboardData;
 import gui.common.RealDashboardData;
+import gui.customer.CustomerDashboardView;
+import gui.employee.EmployeeDashboardView;
 import gui.register.LoginView;
 import javafx.application.Application;
 import javafx.scene.Scene;
@@ -21,9 +23,26 @@ public class MainGuiApp extends Application {
             dashboard = new MockDashboardData();
         }
 
-        LoginView loginView = new LoginView(dashboard, primaryStage);
-        primaryStage.setTitle("GSMS - Sign In");
-        primaryStage.setScene(new Scene(loginView.getContent(), 800, 600));
+        String mode = getParameters().getNamed().getOrDefault("mode", "login");
+
+        switch (mode) {
+            case "employee" -> {
+                EmployeeDashboardView view = new EmployeeDashboardView(dashboard, primaryStage::close);
+                primaryStage.setTitle("GSMS - Employee Dashboard");
+                primaryStage.setScene(new Scene(view.build(), 900, 600));
+            }
+            case "customer" -> {
+                CustomerDashboardView view = new CustomerDashboardView(dashboard, primaryStage::close);
+                primaryStage.setTitle("GSMS - Customer Dashboard");
+                primaryStage.setScene(new Scene(view.build(), 900, 600));
+            }
+            default -> {
+                LoginView loginView = new LoginView(dashboard, primaryStage);
+                primaryStage.setTitle("GSMS - Sign In");
+                primaryStage.setScene(new Scene(loginView.getContent(), 800, 600));
+            }
+        }
+
         primaryStage.show();
     }
 

@@ -20,6 +20,8 @@ public class DemoLauncher {
         Process scannerProcess = null;
         Process aiDashboardProcess = null;
         Process guiProcess = null;
+        Process guiEmployeeProcess = null;
+        Process guiCustomerProcess = null;
 
         try {
             System.out.println("Creating LogStore...");
@@ -65,12 +67,24 @@ public class DemoLauncher {
 
             Thread.sleep(500);
 
-            System.out.println("Launching MainGuiApp...");
+            System.out.println("Launching MainGuiApp (Sign In)...");
             guiProcess = launchJavaProcess("gui.MainGuiApp");
+
+            Thread.sleep(300);
+
+            System.out.println("Launching MainGuiApp (Employee Dashboard)...");
+            guiEmployeeProcess = launchJavaProcess("gui.MainGuiApp", "--mode=employee");
+
+            Thread.sleep(300);
+
+            System.out.println("Launching MainGuiApp (Customer Dashboard)...");
+            guiCustomerProcess = launchJavaProcess("gui.MainGuiApp", "--mode=customer");
 
             Process finalScannerProcess = scannerProcess;
             Process finalAiDashboardProcess = aiDashboardProcess;
             Process finalGuiProcess = guiProcess;
+            Process finalGuiEmployeeProcess = guiEmployeeProcess;
+            Process finalGuiCustomerProcess = guiCustomerProcess;
             LogStore finalLogStore = logStore;
             MembershipStore finalMembershipStore = membershipStore;
             AlertManager finalAlertManager = alertManager;
@@ -80,7 +94,9 @@ public class DemoLauncher {
 
                 stopProcess(finalScannerProcess, "DoorScannerDemo");
                 stopProcess(finalAiDashboardProcess, "DemoAiDashboard");
-                stopProcess(finalGuiProcess, "MainGuiApp");
+                stopProcess(finalGuiProcess, "MainGuiApp (Sign In)");
+                stopProcess(finalGuiEmployeeProcess, "MainGuiApp (Employee)");
+                stopProcess(finalGuiCustomerProcess, "MainGuiApp (Customer)");
 
                 try {
                     finalAlertManager.stopRunning();
@@ -107,7 +123,9 @@ public class DemoLauncher {
 
             stopProcess(scannerProcess, "DoorScannerDemo");
             stopProcess(aiDashboardProcess, "DemoAiDashboard");
-            stopProcess(guiProcess, "MainGuiApp");
+            stopProcess(guiProcess, "MainGuiApp (Sign In)");
+            stopProcess(guiEmployeeProcess, "MainGuiApp (Employee)");
+            stopProcess(guiCustomerProcess, "MainGuiApp (Customer)");
 
             if (alertManager != null) {
                 try {
@@ -130,20 +148,23 @@ public class DemoLauncher {
         }
     }
 
-    private static Process launchJavaProcess(String mainClass) throws IOException {
+    private static Process launchJavaProcess(String mainClass, String... extraArgs) throws IOException {
         String javaBin = System.getProperty("java.home")
                 + File.separator + "bin"
                 + File.separator + "java";
 
         String classpath = System.getProperty("java.class.path");
 
-        ProcessBuilder builder = new ProcessBuilder(
-                javaBin,
-                "-cp",
-                classpath,
-                mainClass
-        );
+        java.util.List<String> command = new java.util.ArrayList<>();
+        command.add(javaBin);
+        command.add("-cp");
+        command.add(classpath);
+        command.add(mainClass);
+        for (String arg : extraArgs) {
+            command.add(arg);
+        }
 
+        ProcessBuilder builder = new ProcessBuilder(command);
         builder.inheritIO();
         return builder.start();
     }
