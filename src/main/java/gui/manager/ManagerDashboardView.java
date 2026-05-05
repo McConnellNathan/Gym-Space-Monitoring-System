@@ -74,7 +74,7 @@ public class ManagerDashboardView {
         sidebar.setPrefWidth(180);
         sidebar.setStyle("-fx-background-color: " + RED + ";");
 
-        Image logoImage = new Image(getClass().getResource("/gymlogo.png").toExternalForm());
+        Image logoImage = new Image(getClass().getResource("/gymLogo.png").toExternalForm());
         ImageView logo = new ImageView(logoImage);
 
         logo.setFitHeight(100);
