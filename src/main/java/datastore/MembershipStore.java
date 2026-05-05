@@ -70,8 +70,8 @@ public class MembershipStore extends Server {
         }
 
         employees.add(new Employee("E-001", "Nathan McConnell", "nmcconnell", Employee.EmployeeStatus.MANAGER, "1234"));
-        employees.add(new Employee("E-002", "Kevin Rouzand", "krouzand", Employee.EmployeeStatus.EMPLOYEE, "1234"));
-        employees.add(new Employee("E-003", "Asthon Langen", "alangen", Employee.EmployeeStatus.EMPLOYEE, "1234"));
+        employees.add(new Employee("E-002", "Kevin Rouzand", "krouzaud", Employee.EmployeeStatus.EMPLOYEE, "1234"));
+        employees.add(new Employee("E-003", "Ashton Langen", "alangen", Employee.EmployeeStatus.EMPLOYEE, "1234"));
         employees.add(new Employee("E-004", "Julia Marsh", "jmarsh", Employee.EmployeeStatus.MANAGER, "1234"));
         employees.add(new Employee("E-005", "Mckenzie Johnston", "mjohnston", Employee.EmployeeStatus.EMPLOYEE, "1234"));
     }

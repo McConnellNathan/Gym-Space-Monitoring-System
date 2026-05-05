@@ -2,6 +2,7 @@ package app;
 
 import alertmanager.AlertManager;
 import datastore.LogStore;
+import datastore.MembershipStore;
 
 import java.io.File;
 import java.io.IOException;
@@ -10,12 +11,17 @@ public class DemoLauncher {
     private static final String HOST = "localhost";
     private static final int LOG_STORE_PORT = 5000;
     private static final int ALERT_MANAGER_PORT = 6000;
+    private static final int MEMBERSHIP_STORE_PORT = 5001;
 
     public static void main(String[] args) throws InterruptedException {
         LogStore logStore = null;
+        MembershipStore membershipStore = null;
         AlertManager alertManager = null;
         Process scannerProcess = null;
         Process aiDashboardProcess = null;
+        Process guiProcess = null;
+        Process guiEmployeeProcess = null;
+        Process guiCustomerProcess = null;
 
         try {
             System.out.println("Creating LogStore...");
@@ -23,6 +29,14 @@ public class DemoLauncher {
 
             System.out.println("Starting LogStore...");
             logStore.start();
+
+            Thread.sleep(250);
+
+            System.out.println("Creating MembershipStore...");
+            membershipStore = new MembershipStore(HOST, MEMBERSHIP_STORE_PORT);
+
+            System.out.println("Starting MembershipStore...");
+            membershipStore.start();
 
             Thread.sleep(250);
 
@@ -40,6 +54,7 @@ public class DemoLauncher {
             Thread.sleep(500);
 
             System.out.printf("LogStore started on %s:%d%n", HOST, LOG_STORE_PORT);
+            System.out.printf("MembershipStore started on %s:%d%n", HOST, MEMBERSHIP_STORE_PORT);
             System.out.printf("AlertManager started on %s:%d%n", HOST, ALERT_MANAGER_PORT);
 
             System.out.println("Launching DoorScannerDemo...");
@@ -50,9 +65,28 @@ public class DemoLauncher {
             System.out.println("Launching DemoAiDashboard...");
             aiDashboardProcess = launchJavaProcess("app.DemoAiDashboard");
 
+            Thread.sleep(500);
+
+            System.out.println("Launching MainGuiApp (Sign In)...");
+            guiProcess = launchJavaProcess("gui.MainGuiApp");
+
+            Thread.sleep(300);
+
+            System.out.println("Launching MainGuiApp (Employee Dashboard)...");
+            guiEmployeeProcess = launchJavaProcess("gui.MainGuiApp", "--mode=employee");
+
+            Thread.sleep(300);
+
+            System.out.println("Launching MainGuiApp (Customer Dashboard)...");
+            guiCustomerProcess = launchJavaProcess("gui.MainGuiApp", "--mode=customer");
+
             Process finalScannerProcess = scannerProcess;
             Process finalAiDashboardProcess = aiDashboardProcess;
+            Process finalGuiProcess = guiProcess;
+            Process finalGuiEmployeeProcess = guiEmployeeProcess;
+            Process finalGuiCustomerProcess = guiCustomerProcess;
             LogStore finalLogStore = logStore;
+            MembershipStore finalMembershipStore = membershipStore;
             AlertManager finalAlertManager = alertManager;
 
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -60,9 +94,17 @@ public class DemoLauncher {
 
                 stopProcess(finalScannerProcess, "DoorScannerDemo");
                 stopProcess(finalAiDashboardProcess, "DemoAiDashboard");
+                stopProcess(finalGuiProcess, "MainGuiApp (Sign In)");
+                stopProcess(finalGuiEmployeeProcess, "MainGuiApp (Employee)");
+                stopProcess(finalGuiCustomerProcess, "MainGuiApp (Customer)");
 
                 try {
                     finalAlertManager.stopRunning();
+                } catch (Exception ignored) {
+                }
+
+                try {
+                    finalMembershipStore.stopRunning();
                 } catch (Exception ignored) {
                 }
 
@@ -81,10 +123,19 @@ public class DemoLauncher {
 
             stopProcess(scannerProcess, "DoorScannerDemo");
             stopProcess(aiDashboardProcess, "DemoAiDashboard");
+            stopProcess(guiProcess, "MainGuiApp (Sign In)");
+            stopProcess(guiEmployeeProcess, "MainGuiApp (Employee)");
+            stopProcess(guiCustomerProcess, "MainGuiApp (Customer)");
 
             if (alertManager != null) {
                 try {
                     alertManager.stopRunning();
+                } catch (Exception ignored) {
+                }
+            }
+            if (membershipStore != null) {
+                try {
+                    membershipStore.stopRunning();
                 } catch (Exception ignored) {
                 }
             }
@@ -97,20 +148,23 @@ public class DemoLauncher {
         }
     }
 
-    private static Process launchJavaProcess(String mainClass) throws IOException {
+    private static Process launchJavaProcess(String mainClass, String... extraArgs) throws IOException {
         String javaBin = System.getProperty("java.home")
                 + File.separator + "bin"
                 + File.separator + "java";
 
         String classpath = System.getProperty("java.class.path");
 
-        ProcessBuilder builder = new ProcessBuilder(
-                javaBin,
-                "-cp",
-                classpath,
-                mainClass
-        );
+        java.util.List<String> command = new java.util.ArrayList<>();
+        command.add(javaBin);
+        command.add("-cp");
+        command.add(classpath);
+        command.add(mainClass);
+        for (String arg : extraArgs) {
+            command.add(arg);
+        }
 
+        ProcessBuilder builder = new ProcessBuilder(command);
         builder.inheritIO();
         return builder.start();
     }

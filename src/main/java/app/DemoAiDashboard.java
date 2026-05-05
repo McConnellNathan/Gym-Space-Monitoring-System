@@ -22,12 +22,8 @@ import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.geometry.Insets;
 import javafx.scene.Scene;
-import javafx.scene.control.Label;
 import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import nu.pattern.OpenCV;
@@ -40,6 +36,7 @@ import aihazardanalyzer.service.MessageHandler;
 import soundmonitor.service.AudioAnalysisService;
 
 public class DemoAiDashboard extends Application {
+
     // AI and hardware service variables
     private WebcamFrameCapture webcam;
     private OccupancyAnalysisService occupancyAnalysisService;
@@ -57,7 +54,6 @@ public class DemoAiDashboard extends Application {
     private volatile FallAnalysisResult latestFallResult;
     private volatile WalkwayAnalysisResult latestWalkwayResult;
     private volatile AudioAnalysisResult latestAudioResult;
-    private ImageView cameraView;
     private volatile byte[] latestFrameBytes;
     private volatile boolean frameCaptureRunning = false;
     private volatile boolean occupancyRunning = false;
@@ -75,31 +71,8 @@ public class DemoAiDashboard extends Application {
     private MessageHandler messageHandler;
     private final Map<String, Long> lastSentAlertTimes = new ConcurrentHashMap<>();
 
-    // UI components
-    private Label peopleCountLabel;
-    private Label sceneStatusLabel;
-    private Label occupancyConfidenceLabel;
-    private Label occupancyNotesLabel;
-
-    private Label aggressionLabel;
-    private Label aggressionConfidenceLabel;
-    private Label aggressionNotesLabel;
-
-    private Label fallLabel;
-    private Label fallConfidenceLabel;
-    private Label fallNotesLabel;
-
-    private Label walkwayLabel;
-    private Label walkwayConfidenceLabel;
-    private Label walkwayNotesLabel;
-
-    private Label buzzerArmedLabel;
-    private Label buzzerLabel;
-    private Label buzzerReasonLabel;
-    private Label audioLevelLabel;
-    private Label audioTypeLabel;
-    private Label audioConfidenceLabel;
-    private Label audioNotesLabel;
+    // View
+    private DemoAiDashboardView view;
 
     private Timeline frameCaptureTimeline;
     private Timeline occupancyTimeline;
@@ -111,11 +84,6 @@ public class DemoAiDashboard extends Application {
     @Override
     public void start(Stage stage) {
         OpenCV.loadLocally();
-
-        cameraView = new ImageView();
-        cameraView.setFitWidth(420);
-        cameraView.setPreserveRatio(true);
-        cameraView.setSmooth(true);
 
         webcam = new WebcamFrameCapture(0, 640);
 
@@ -136,51 +104,6 @@ public class DemoAiDashboard extends Application {
 
         alarmSoundPlayer = new AlarmSoundPlayer("/alarm.wav");
 
-        Label occupancySectionLabel = new Label("Occupancy Analysis");
-        occupancySectionLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
-
-        Label aggressionSectionLabel = new Label("Conflict Detection");
-        aggressionSectionLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
-
-        Label fallSectionLabel = new Label("Fall Detection");
-        fallSectionLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
-
-        Label walkwaySectionLabel = new Label("Walkway Monitoring");
-        walkwaySectionLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
-
-        Label soundSectionLabel = new Label("Sound Monitoring");
-        soundSectionLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
-
-        peopleCountLabel = new Label("People Count: --");
-        sceneStatusLabel = new Label("Scene Status: --");
-        occupancyConfidenceLabel = new Label("Occupancy Confidence: --");
-        occupancyNotesLabel = new Label("Occupancy Notes: --");
-        occupancyNotesLabel.setWrapText(true);
-
-        aggressionLabel = new Label("Possible Conflict: --");
-        aggressionConfidenceLabel = new Label("Aggression Confidence: --");
-        aggressionNotesLabel = new Label("Aggression Notes: --");
-        aggressionNotesLabel.setWrapText(true);
-
-        fallLabel = new Label("Possible Fall: --");
-        fallConfidenceLabel = new Label("Fall Confidence: --");
-        fallNotesLabel = new Label("Fall Notes: --");
-        fallNotesLabel.setWrapText(true);
-
-        walkwayLabel = new Label("Walkway Obstructed: --");
-        walkwayConfidenceLabel = new Label("Walkway Confidence: --");
-        walkwayNotesLabel = new Label("Walkway Notes: --");
-        walkwayNotesLabel.setWrapText(true);
-
-        buzzerArmedLabel = new Label("Bulky Buzzer Armed: OFF");
-        buzzerLabel = new Label("Bulky Buzzer: OFF");
-        buzzerReasonLabel = new Label("Buzzer Reason: --");
-        audioLevelLabel = new Label("Audio Level: --");
-        audioTypeLabel = new Label("Detected Sound Type: --");
-        audioConfidenceLabel = new Label("Sound Analysis Confidence: --");
-        audioNotesLabel = new Label("Sound Analysis Notes: --");
-        audioNotesLabel.setWrapText(true);
-
         try {
             messageHandler = MessageHandler.getInstance();
             System.out.println("Connected to AlertManager through MessageHandler.");
@@ -188,76 +111,8 @@ public class DemoAiDashboard extends Application {
             System.err.println("Could not connect to AlertManager: " + e.getMessage());
         }
 
-        VBox occupancyBox = new VBox(
-                6,
-                occupancySectionLabel,
-                peopleCountLabel,
-                sceneStatusLabel,
-                occupancyConfidenceLabel,
-                occupancyNotesLabel
-        );
-        occupancyBox.setPadding(new Insets(10));
-        occupancyBox.setStyle("-fx-border-color: lightgray; -fx-border-radius: 6; -fx-background-radius: 6;");
-
-        VBox aggressionBox = new VBox(
-                6,
-                aggressionSectionLabel,
-                aggressionLabel,
-                aggressionConfidenceLabel,
-                aggressionNotesLabel
-        );
-        aggressionBox.setPadding(new Insets(10));
-        aggressionBox.setStyle("-fx-border-color: lightgray; -fx-border-radius: 6; -fx-background-radius: 6;");
-
-        VBox fallBox = new VBox(
-                6,
-                fallSectionLabel,
-                fallLabel,
-                fallConfidenceLabel,
-                fallNotesLabel
-        );
-        fallBox.setPadding(new Insets(10));
-        fallBox.setStyle("-fx-border-color: lightgray; -fx-border-radius: 6; -fx-background-radius: 6;");
-
-        VBox walkwayBox = new VBox(
-                6,
-                walkwaySectionLabel,
-                walkwayLabel,
-                walkwayConfidenceLabel,
-                walkwayNotesLabel
-        );
-        walkwayBox.setPadding(new Insets(10));
-        walkwayBox.setStyle("-fx-border-color: lightgray; -fx-border-radius: 6; -fx-background-radius: 6;");
-
-        VBox soundBox = new VBox(
-                6,
-                soundSectionLabel,
-                buzzerArmedLabel,
-                buzzerLabel,
-                buzzerReasonLabel,
-                audioLevelLabel,
-                audioTypeLabel,
-                audioConfidenceLabel,
-                audioNotesLabel
-        );
-        soundBox.setPadding(new Insets(10));
-        soundBox.setStyle("-fx-border-color: lightgray; -fx-border-radius: 6; -fx-background-radius: 6;");
-
-        VBox root = new VBox(
-                14,
-                cameraView,
-                occupancyBox,
-                aggressionBox,
-                fallBox,
-                walkwayBox,
-                soundBox
-        );
-
-        root.setPadding(new Insets(20));
-
-        root.setPadding(new Insets(20));
-
-        Scene scene = new Scene(root, 900, 1175);
+        view = new DemoAiDashboardView();
+        Scene scene = view.getScene();
 
         scene.setOnKeyPressed(event -> {
             switch (event.getCode()) {
@@ -348,10 +203,9 @@ public class DemoAiDashboard extends Application {
 
                 Image previewImage = new Image(new ByteArrayInputStream(frameBytes));
 
-                Platform.runLater(() -> cameraView.setImage(previewImage));
+                Platform.runLater(() -> view.getCameraView().setImage(previewImage));
             } catch (Exception e) {
-                Platform.runLater(() ->
-                        occupancyNotesLabel.setText("Occupancy Notes: frame capture error - " + e.getMessage()));
+                Platform.runLater(() -> view.getOccupancyPanel().setFrameError(e.getMessage()));
             } finally {
                 frameCaptureRunning = false;
             }
@@ -385,15 +239,14 @@ public class DemoAiDashboard extends Application {
                     );
                 }
 
-                Platform.runLater(() -> {
-                    peopleCountLabel.setText("People Count: " + stableResult.getPeopleCount());
-                    peopleCountLabel.setStyle("-fx-text-fill: green; -fx-font-weight: bold; -fx-font-size: 14px;");
-                    sceneStatusLabel.setText("Scene Status: " + stableResult.getSceneStatus());
-                    occupancyConfidenceLabel.setText(String.format("Occupancy Confidence: %.2f", stableResult.getConfidence()));
-                    occupancyNotesLabel.setText("Occupancy Notes: " + stableResult.getNotes());
-                });
+                Platform.runLater(() -> view.getOccupancyPanel().update(
+                        stableResult.getPeopleCount(),
+                        stableResult.getSceneStatus(),
+                        stableResult.getConfidence(),
+                        stableResult.getNotes()
+                ));
             } catch (Exception e) {
-                Platform.runLater(() -> occupancyNotesLabel.setText("Occupancy Notes: error - " + e.getMessage()));
+                Platform.runLater(() -> view.getOccupancyPanel().setError(e.getMessage()));
             } finally {
                 occupancyRunning = false;
             }
@@ -426,19 +279,13 @@ public class DemoAiDashboard extends Application {
                     );
                 }
 
-                Platform.runLater(() -> {
-                    aggressionLabel.setText("Possible Conflict: " + stableResult.isPossibleConflict());
-                    aggressionConfidenceLabel.setText(String.format("Aggression Confidence: %.2f", stableResult.getConfidence()));
-                    aggressionNotesLabel.setText("Aggression Notes: " + stableResult.getNotes());
-
-                    if (stableResult.isPossibleConflict()) {
-                        aggressionLabel.setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
-                    } else {
-                        aggressionLabel.setStyle("-fx-text-fill: green; -fx-font-weight: bold;");
-                    }
-                });
+                Platform.runLater(() -> view.getAggressionPanel().update(
+                        stableResult.isPossibleConflict(),
+                        stableResult.getConfidence(),
+                        stableResult.getNotes()
+                ));
             } catch (Exception e) {
-                Platform.runLater(() -> aggressionNotesLabel.setText("Aggression Notes: error - " + e.getMessage()));
+                Platform.runLater(() -> view.getAggressionPanel().setError(e.getMessage()));
             } finally {
                 aggressionRunning = false;
             }
@@ -471,19 +318,13 @@ public class DemoAiDashboard extends Application {
                     );
                 }
 
-                Platform.runLater(() -> {
-                    fallLabel.setText("Possible Fall: " + stableResult.isPossibleFall());
-                    fallConfidenceLabel.setText(String.format("Fall Confidence: %.2f", stableResult.getConfidence()));
-                    fallNotesLabel.setText("Fall Notes: " + stableResult.getNotes());
-
-                    if (stableResult.isPossibleFall()) {
-                        fallLabel.setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
-                    } else {
-                        fallLabel.setStyle("-fx-text-fill: green; -fx-font-weight: bold;");
-                    }
-                });
+                Platform.runLater(() -> view.getFallPanel().update(
+                        stableResult.isPossibleFall(),
+                        stableResult.getConfidence(),
+                        stableResult.getNotes()
+                ));
             } catch (Exception e) {
-                Platform.runLater(() -> fallNotesLabel.setText("Fall Notes: error - " + e.getMessage()));
+                Platform.runLater(() -> view.getFallPanel().setError(e.getMessage()));
             } finally {
                 fallRunning = false;
             }
@@ -516,19 +357,13 @@ public class DemoAiDashboard extends Application {
                     );
                 }
 
-                Platform.runLater(() -> {
-                    walkwayLabel.setText("Walkway Obstructed: " + stableResult.isWalkwayObstructed());
-                    walkwayConfidenceLabel.setText(String.format("Walkway Confidence: %.2f", stableResult.getConfidence()));
-                    walkwayNotesLabel.setText("Walkway Notes: " + stableResult.getNotes());
-
-                    if (stableResult.isWalkwayObstructed()) {
-                        walkwayLabel.setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
-                    } else {
-                        walkwayLabel.setStyle("-fx-text-fill: green; -fx-font-weight: bold;");
-                    }
-                });
+                Platform.runLater(() -> view.getWalkwayPanel().update(
+                        stableResult.isWalkwayObstructed(),
+                        stableResult.getConfidence(),
+                        stableResult.getNotes()
+                ));
             } catch (Exception e) {
-                Platform.runLater(() -> walkwayNotesLabel.setText("Walkway Notes: error - " + e.getMessage()));
+                Platform.runLater(() -> view.getWalkwayPanel().setError(e.getMessage()));
             } finally {
                 walkwayRunning = false;
             }
@@ -541,16 +376,7 @@ public class DemoAiDashboard extends Application {
     private void updateBuzzerUi() {
         BulkyBuzzerState buzzerState = bulkyBuzzerService.getCurrentState();
 
-        buzzerArmedLabel.setText("Bulky Buzzer Armed: " + (buzzerState.isArmed() ? "ON" : "OFF"));
-        buzzerLabel.setText("Bulky Buzzer: " + (buzzerState.isAlarmActive() ? "ON" : "OFF"));
-        buzzerReasonLabel.setText("Buzzer Reason: " + buzzerState.getReason());
-        audioLevelLabel.setText(String.format("Audio Level: %.3f", buzzerState.getCurrentLevel()));
-
-        if (buzzerState.isArmed()) {
-            buzzerArmedLabel.setStyle("-fx-text-fill: orange; -fx-font-weight: bold;");
-        } else {
-            buzzerArmedLabel.setStyle("-fx-text-fill: gray; -fx-font-weight: bold;");
-        }
+        view.getSoundPanel().updateBuzzerState(buzzerState);
 
         if (buzzerState.isAlarmActive() && !lastAlarmState) {
             alarmSoundPlayer.playAsync();
@@ -564,15 +390,11 @@ public class DemoAiDashboard extends Application {
                         "Alarm activated manually."
                 );
 
-                audioTypeLabel.setText("Detected Sound Type: MANUAL_TRIGGER");
-                audioConfidenceLabel.setText("Sound Analysis Confidence: 1.00");
-                audioNotesLabel.setText("Sound Analysis Notes: Alarm activated manually.");
+                view.getSoundPanel().setManualTrigger();
 
                 System.out.println("Audio AI skipped: manual trigger.");
             } else if (buzzerState.getTriggerSource() == BuzzerTriggerSource.AUDIO_THRESHOLD) {
-                audioTypeLabel.setText("Detected Sound Type: analyzing...");
-                audioConfidenceLabel.setText("Sound Analysis Confidence: --");
-                audioNotesLabel.setText("Sound Analysis Notes: Sending recent audio clip for analysis...");
+                view.getSoundPanel().setAudioAnalyzing();
 
                 analyzeRecentAudioClip();
 
@@ -586,16 +408,12 @@ public class DemoAiDashboard extends Application {
             }
         }
 
-        lastAlarmState = buzzerState.isAlarmActive();
-
-        if (buzzerState.isAlarmActive()) {
-            buzzerLabel.setStyle("-fx-text-fill: red; -fx-font-weight: bold; -fx-font-size: 18px;");
-        } else {
-            buzzerLabel.setStyle("-fx-text-fill: green; -fx-font-weight: bold; -fx-font-size: 18px;");
+        boolean currentAlarmState = buzzerState.isAlarmActive();
+        if (currentAlarmState != lastAlarmState) {
+            view.setAlarmBlinking(currentAlarmState);
         }
-
+        lastAlarmState = currentAlarmState;
     }
-
 
     private void stopAllTimelines() {
         if (frameCaptureTimeline != null) frameCaptureTimeline.stop();
@@ -747,25 +565,9 @@ public class DemoAiDashboard extends Application {
                 AudioAnalysisResult result = audioAnalysisService.analyzeWavClip(wavBytes);
                 latestAudioResult = result;
 
-                Platform.runLater(() -> {
-                    audioTypeLabel.setText("Detected Sound Type: " + safeValue(result.getSoundType()));
-                    audioConfidenceLabel.setText(
-                            String.format("Sound Analysis Confidence: %.2f", result.getConfidence())
-                    );
-                    audioNotesLabel.setText("Sound Analysis Notes: " + safeValue(result.getNotes()));
-
-                    if (result.isTriggerAlarm()) {
-                        audioTypeLabel.setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
-                    } else {
-                        audioTypeLabel.setStyle("-fx-text-fill: green; -fx-font-weight: bold;");
-                    }
-                });
+                Platform.runLater(() -> view.getSoundPanel().updateAudioResult(result));
             } catch (Exception e) {
-                Platform.runLater(() -> {
-                    audioTypeLabel.setText("Detected Sound Type: error");
-                    audioConfidenceLabel.setText("Sound Analysis Confidence: --");
-                    audioNotesLabel.setText("Sound Analysis Notes: " + e.getMessage());
-                });
+                Platform.runLater(() -> view.getSoundPanel().setAudioError(e.getMessage()));
             } finally {
                 audioAnalysisRunning = false;
             }
@@ -773,10 +575,6 @@ public class DemoAiDashboard extends Application {
 
         worker.setDaemon(true);
         worker.start();
-    }
-
-    private String safeValue(String value) {
-        return value == null ? "--" : value;
     }
 
     public static void main(String[] args) {

@@ -201,7 +201,7 @@ public class AlertManager extends Server {
                 UUID.randomUUID().toString(),
                 "ALERT_" + action,
                 "alertmanager",
-                action + ": " + alert.description() ,
+                action + ": " + alert.description() + " [status=" + alert.status() + ", severity=" + alert.severity() + "]",
                 alert.alertId(),
                 System.currentTimeMillis()
         );
