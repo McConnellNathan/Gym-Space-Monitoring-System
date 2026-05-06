@@ -23,9 +23,14 @@ public class WalkwayPanel extends VBox {
         walkwayConfidenceLabel.setStyle("-fx-text-fill: " + BROWN + ";");
         walkwayNotesLabel.setStyle("-fx-text-fill: " + BROWN + ";");
         walkwayNotesLabel.setWrapText(true);
+        walkwayNotesLabel.setMinHeight(60);
 
         getChildren().addAll(walkwaySectionLabel, walkwayLabel, walkwayConfidenceLabel, walkwayNotesLabel);
         setPadding(new Insets(10));
+        setMinHeight(180);
+        setPrefHeight(180);
+        setFillWidth(true);
+        setMaxWidth(Double.MAX_VALUE);
         setStyle("-fx-background-color: white; -fx-border-color: " + RED + "; -fx-border-radius: 6; -fx-background-radius: 6;");
     }
 

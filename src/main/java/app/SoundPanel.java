@@ -33,10 +33,15 @@ public class SoundPanel extends VBox {
         audioConfidenceLabel.setStyle("-fx-text-fill: " + BROWN + ";");
         audioNotesLabel.setStyle("-fx-text-fill: " + BROWN + ";");
         audioNotesLabel.setWrapText(true);
+        audioNotesLabel.setMinHeight(60);
 
         getChildren().addAll(soundSectionLabel, buzzerArmedLabel, buzzerLabel, buzzerReasonLabel,
                 audioLevelLabel, audioTypeLabel, audioConfidenceLabel, audioNotesLabel);
         setPadding(new Insets(10));
+        setMinHeight(250);
+        setPrefHeight(250);
+        setFillWidth(true);
+        setMaxWidth(Double.MAX_VALUE);
         setStyle("-fx-background-color: white; -fx-border-color: " + RED + "; -fx-border-radius: 6; -fx-background-radius: 6;");
     }
 

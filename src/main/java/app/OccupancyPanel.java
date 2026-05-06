@@ -24,10 +24,15 @@ public class OccupancyPanel extends VBox {
         occupancyConfidenceLabel.setStyle("-fx-text-fill: " + BROWN + ";");
         occupancyNotesLabel.setStyle("-fx-text-fill: " + BROWN + ";");
         occupancyNotesLabel.setWrapText(true);
+        occupancyNotesLabel.setMinHeight(60);
 
         getChildren().addAll(occupancySectionLabel, peopleCountLabel, sceneStatusLabel,
                 occupancyConfidenceLabel, occupancyNotesLabel);
         setPadding(new Insets(10));
+        setMinHeight(180);
+        setPrefHeight(180);
+        setFillWidth(true);
+        setMaxWidth(Double.MAX_VALUE);
         setStyle("-fx-background-color: white; -fx-border-color: " + RED + "; -fx-border-radius: 6; -fx-background-radius: 6;");
     }
 

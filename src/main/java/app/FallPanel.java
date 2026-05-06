@@ -23,9 +23,14 @@ public class FallPanel extends VBox {
         fallConfidenceLabel.setStyle("-fx-text-fill: " + BROWN + ";");
         fallNotesLabel.setStyle("-fx-text-fill: " + BROWN + ";");
         fallNotesLabel.setWrapText(true);
+        fallNotesLabel.setMinHeight(60);
 
         getChildren().addAll(fallSectionLabel, fallLabel, fallConfidenceLabel, fallNotesLabel);
         setPadding(new Insets(10));
+        setMinHeight(180);
+        setPrefHeight(180);
+        setFillWidth(true);
+        setMaxWidth(Double.MAX_VALUE);
         setStyle("-fx-background-color: white; -fx-border-color: " + RED + "; -fx-border-radius: 6; -fx-background-radius: 6;");
     }
 

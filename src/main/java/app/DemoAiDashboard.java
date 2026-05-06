@@ -123,6 +123,9 @@ public class DemoAiDashboard extends Application {
 
         stage.setTitle("GSMS AI Demo Dashboard");
         stage.setScene(scene);
+        stage.setMinWidth(1000);
+        stage.setMinHeight(1025);
+        stage.centerOnScreen();
         stage.show();
 
         startFrameCaptureLoop();

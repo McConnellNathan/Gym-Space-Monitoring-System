@@ -23,10 +23,15 @@ public class AggressionPanel extends VBox {
         aggressionConfidenceLabel.setStyle("-fx-text-fill: " + BROWN + ";");
         aggressionNotesLabel.setStyle("-fx-text-fill: " + BROWN + ";");
         aggressionNotesLabel.setWrapText(true);
+        aggressionNotesLabel.setMinHeight(60);
 
         getChildren().addAll(aggressionSectionLabel, aggressionLabel,
                 aggressionConfidenceLabel, aggressionNotesLabel);
         setPadding(new Insets(10));
+        setMinHeight(180);
+        setPrefHeight(180);
+        setMaxWidth(Double.MAX_VALUE);
+        setFillWidth(true);
         setStyle("-fx-background-color: white; -fx-border-color: " + RED + "; -fx-border-radius: 6; -fx-background-radius: 6;");
     }
 
